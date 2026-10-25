@@ -1,0 +1,11 @@
+# Latest PERMANOVA figures
+
+当前目录：[PERMANOVA_MC8_20261014_183535/](PERMANOVA_MC8_20261014_183535/)。
+
+- [完整PDF](PERMANOVA_MC8_20261014_183535/00_all_final_results.pdf)
+- [全样本图](PERMANOVA_MC8_20261014_183535/all_hosts/)
+- [仅珊瑚图](PERMANOVA_MC8_20261014_183535/coral/)
+- [五组两两比较热图](PERMANOVA_MC8_20261014_183535/pairwise_heatmaps/)
+- [其他当前图和源文件](README.md)
+
+当前分析结果在 [results/PERMANOVA_MC8_20261014_183535/](../results/PERMANOVA_MC8_20261014_183535/)。
