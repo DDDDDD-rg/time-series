@@ -1,3 +1,6 @@
+# 当前MC19 coral方案停用本历史入口；原代码留作查阅，原文件另有备份。
+stop("本轮只做coral环境关联，不运行旧Host_type/TS调整模型。请使用run_permanova.R或04_plot_permanova.R。",call.=FALSE)
+
 # 宿主和时间：可以单独打开本文件，从头运行。
 # 设置在01_data_settings.R中；本脚本不依赖旧脚本留下的工作区对象。
 project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"

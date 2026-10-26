@@ -1,3 +1,15 @@
+# 当前入口：MC19 coral原始样本环境分析
+
+2026-10-27核对：v2已于2026-10-26完成，当前运行编号20261026_224333。vegan负责每次拟合的R²、F、平方和与自由度，脚本负责TS环境标签置换及P值汇总；现场状态为analysis_and_plots_complete。
+
+在RStudio打开scripts/run_permanova.R并点击Source，默认完成7项环境分析及配套图；只重画图运行scripts/04_plot_permanova.R。完整说明见[scripts/README.md](../scripts/README.md)。
+
+仅coral、19个MC、7项当期环境；原始样本逐行保留，无Repeat_group平均或Host_type模型。7个TS仍完整枚举5040种环境标签分配，MC样本行固定；每次调用vegan::adonis2(permutations=0)，P值仍按F的排列分布汇总，7项统一BH。其他筛选、转换、检测限和作图设置不变。
+
+新的results运行目录顶层只保留environment_results.csv主表和supporting_files/配套文件夹；完整结果、输入、快照、置换记录、状态、日志、RDS和NMDS缓存都在配套文件夹。04、07及环境组成图通过共用读取器兼容新布局和旧v1平铺结果；当前MC19结果保持原路径；历史MC8/v1结果及图已成组归档，旧路径有兼容联接。图运行目录保留3份合并PDF，单图和配套资料归入supporting_files；作图后自动刷新合并PDF。详见[更新日志](../CHANGELOG.md)。
+
+下文是2026-10-14的MC8历史方法，不适用于当前一键入口；原代码已备份至archive/script_backups/。
+
 # MC8 PERMANOVA：加入 Seawater 和 Sediment 的版本
 
 本版本已于2026-10-14完成运行。当前结果：[PERMANOVA_MC8_20261014_183535](../results/PERMANOVA_MC8_20261014_183535/)。历史结果与图已成组归档，旧路径留有兼容联接。

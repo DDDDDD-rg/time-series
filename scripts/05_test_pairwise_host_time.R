@@ -1,3 +1,6 @@
+# 当前MC19 coral方案停用本历史入口；原代码留作查阅，原文件另有备份。
+stop("本轮未安排宿主/TS两两检验，不运行旧MC8两两模型。请使用run_permanova.R或04_plot_permanova.R。",call.=FALSE)
+
 # 宿主和采样批次的两两 PERMANOVA：独立运行，不重跑02的整体检验。
 # 自动读取01的范围、Repeat_group均值、平方根Bray距离和置换次数。
 project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"

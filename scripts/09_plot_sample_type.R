@@ -1,3 +1,6 @@
+# 当前MC19 coral方案停用本历史入口；原代码留作查阅，原文件另有备份。
+stop("本轮仅coral，不绘制旧HOST/Seawater/Sediment图。请使用run_permanova.R或04_plot_permanova.R。",call.=FALSE)
+
 # HOST / Seawater / Sediment: 2D NMDS overview and pairwise heatmap.
 # Read saved PERMANOVA results; never refit tests or recalculate BH.
 # If no compatible coordinates exist, fit ONLY a 2D NMDS (4 workers).

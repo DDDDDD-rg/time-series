@@ -1,17 +1,22 @@
 # Time-series research project
 
-整理日期：2026-10-14。当前使用 MC6、MC507、MC21、MC520、MC10、MC15、MC0、MC25。
+2026-10-26当前PERMANOVA：coral原始样本、19个MC、7项当期环境；入口为[scripts/run_permanova.R](scripts/run_permanova.R)，输入为[data/PERMANOVA_input_MC19_env7_20261026.xlsx](data/PERMANOVA_input_MC19_env7_20261026.xlsx)。v2已于2026-10-26 22:43完成分析与作图；统计量由vegan计算，保留TS标签置换与P值汇总规则。最新运行和整理记录见[更新日志](CHANGELOG.md)。
+
+当前results运行目录顶层只放environment_results.csv和supporting_files/；figures对应目录顶层为3份合并PDF和supporting_files/，单图与配套文件集中保存。配套作图兼容旧目录。运行及字段说明见[scripts/README.md](scripts/README.md)。
+
+以下保留2026-10-14的MC8与GLMM入口记录；其中MC8 PERMANOVA结果和图为历史运行。
 
 ## 常用入口
 
 | 用途 | 文件或目录 |
 |---|---|
+| 当前MC19 PERMANOVA | [主结果表](results/PERMANOVA_MC19_env7_coral_samples_20261026_224333/environment_results.csv)、[三份合并图入口](figures/00_LATEST_PERMANOVA.md) |
 | 当前GLMM结果 | [结果总览](results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_key_results.html)、[中文摘要](results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_key_results.txt) |
 | GLMM数值检查 | [各MC检查表](results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_model_checks.csv) |
 | GLMM效应结果 | [DO系数](results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_DO_significance.csv)、[全部系数](results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_beta_significance.csv) |
-| 当前PERMANOVA | [结果总览](results/PERMANOVA_MC8_20261014_183535/00_PERMANOVA_summary.html)、[关键结果](results/PERMANOVA_MC8_20261014_183535/00_key_results.txt) |
-| PERMANOVA两两比较 | [比较族汇总](results/PERMANOVA_MC8_20261014_183535/00_pairwise_summary.csv)、[完整两两结果](results/PERMANOVA_MC8_20261014_183535/01_all_pairwise_results.csv) |
-| 当前PERMANOVA图 | [完整PDF](figures/PERMANOVA_MC8_20261014_183535/00_all_final_results.pdf)、[图片目录](figures/PERMANOVA_MC8_20261014_183535/) |
+| 历史MC8 PERMANOVA | [结果总览](results/PERMANOVA_MC8_20261014_183535/00_PERMANOVA_summary.html)、[关键结果](results/PERMANOVA_MC8_20261014_183535/00_key_results.txt) |
+| 历史MC8两两比较 | [比较族汇总](results/PERMANOVA_MC8_20261014_183535/00_pairwise_summary.csv)、[完整两两结果](results/PERMANOVA_MC8_20261014_183535/01_all_pairwise_results.csv) |
+| 历史MC8 PERMANOVA图 | [完整PDF](figures/PERMANOVA_MC8_20261014_183535/00_all_final_results.pdf)、[图片目录](figures/PERMANOVA_MC8_20261014_183535/) |
 | 其他当前图和源文件 | [图目录说明](figures/README.md) |
 | 本次整理记录 | [移动清单](archive/organization_20261014/move_plan.csv)、[整理说明](archive/organization_20261014/README.md) |
 
@@ -29,7 +34,7 @@
 
 ## 输入与运行
 
-- PERMANOVA输入：[PERMANOVA_input_MC8_20261011.xlsx](data/PERMANOVA_input_MC8_20261011.xlsx)。
+- 历史MC8 PERMANOVA输入：[PERMANOVA_input_MC8_20261011.xlsx](data/PERMANOVA_input_MC8_20261011.xlsx)。
 - GLMM输入：[GLMM_input_MC8_20261011.xlsx](data/GLMM_input_MC8_20261011.xlsx)。
 - 完整PERMANOVA入口：[scripts/run_permanova.R](scripts/run_permanova.R)。
 - 当前GLMM完整拟合入口：[scripts/GLMM.R](scripts/GLMM.R)。

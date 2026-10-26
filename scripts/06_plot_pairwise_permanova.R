@@ -1,3 +1,6 @@
+# 当前MC19 coral方案停用本历史入口；原代码留作查阅，原文件另有备份。
+stop("本轮没有两两检验结果，不绘制旧MC8两两热图。MC逐样本热图在04中输出。请使用run_permanova.R或04_plot_permanova.R。",call.=FALSE)
+
 # Five pairwise PERMANOVA heatmaps, using SAVED results only.
 # Run this file from top to bottom when ready to create the figures.
 # No model fitting, distance calculation, permutations, NMDS, or BH recalculation.

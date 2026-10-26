@@ -1,3 +1,6 @@
+# 当前MC19 coral方案停用本历史入口；原代码留作查阅，原文件另有备份。
+stop("本轮仅coral，不比较HOST/Seawater/Sediment。请使用run_permanova.R或04_plot_permanova.R。",call.=FALSE)
+
 # Broad comparison: HOST / Seawater / Sediment, adjusted for TS.
 # HOST pools all observed biological hosts, including singleton host types.
 # Sourcing this script performs tests ONLY when the user runs it.

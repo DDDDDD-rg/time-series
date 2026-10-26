@@ -1,3 +1,5 @@
+# 历史MC8设置：保留供旧脚本参考；当前MC19入口不读取本文件。
+# 当前设置与读取器见permanova_MC19_data_settings.R；入口为run_permanova.R。
 # 数据和设置：02、03会自动读取本文件，不必先手动运行。
 # 只分析输入表里的8个候选MC；不代表全部Ruegeria群落。
 

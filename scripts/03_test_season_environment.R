@@ -1,5 +1,5 @@
-# 干湿季和环境的统一入口：保留每个Repeat_group，不做第二次平均。
-# all_hosts或coral在01_data_settings.R中设置。
-# 完整分析代码在下方引用的脚本；两个03入口运行的是同一个版本。
+# 当前入口只运行coral的7项环境PERMANOVA；保留文件名便于原有使用习惯。
+# 每个原始样本一行；不执行季节检验、Host_type调整或Repeat_group平均。
+# R²/F由vegan拟合，脚本汇总TS标签置换P；主表在顶层，其余放supporting_files。
 project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
-source(file.path(project_dir, "scripts", "03_test_season_environment_batch_labels.R"), encoding = "UTF-8", local = TRUE)
+source(file.path(project_dir, "scripts", "03_test_season_environment_batch_labels.R"), encoding="UTF-8", local=TRUE)
