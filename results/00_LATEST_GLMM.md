@@ -1,13 +1,12 @@
-# Latest GLMM results
+# Latest GLMM
 
-当前完整运行：[GLMM_Z_TS_SD_Q_MC8_20261013_185720/](GLMM_Z_TS_SD_Q_MC8_20261013_185720/)。
+当前：MC19 x 4 nutrients，TS随机截距；Wald P/BH n=76。
 
-- [中文结果总览](GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_key_results.html)
-- [中文结果摘要TXT](GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_key_results.txt)
-- [各MC拟合与数值检查](GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_model_checks.csv)
-- [DO系数、近似Wald检验与BH q](GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_DO_significance.csv)
-- [全部系数](GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_beta_significance.csv)
-- [运行设置](GLMM_Z_TS_SD_Q_MC8_20261013_185720/01_run_settings.rds)
+- [主结果](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/00_result.csv)
+- [全精度明细](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/supporting_files/all_results.csv)
+- [诊断总表](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/supporting_files/diagnostics/diagnostic_overview.csv)
+- [合并图](../figures/GLMM_MC19_env4_TS_Wald_coral_20261027_233529/)
+- [完整配套（模型与原始输入仅本地）](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/supporting_files/)
 
-当前拟合入口：[scripts/GLMM.R](../scripts/GLMM.R)。已有结果复核入口：[scripts/GLMM_reads_diagnostics_full.R](../scripts/GLMM_reads_diagnostics_full.R)。
-早期四候选、惩罚强度和结构筛查结果见 [archive/GLMM_MC8/](../archive/GLMM_MC8/)。
+98coral，TS4/TS6保留；无Host/Repeat/SST，不平均，不bootstrap。
+历史172226为152项两结构Wald，153110为bootstrap；原结果保留。本批使用TS-only独立目录和指针。

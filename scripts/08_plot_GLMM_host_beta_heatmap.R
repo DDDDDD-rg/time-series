@@ -1,3 +1,4 @@
+# Historical MC8 only. Current MC19 pilot figures: plot_GLMM_MC19.R.
 # Figure A: host coefficients from the saved Z_TS_SD_Q MC8 model.
 # Saved-result plotting only: no refitting, simulation or BH recalculation.
 # English labels; Arial; white background; no title/subtitle.
