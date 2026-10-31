@@ -1,5 +1,30 @@
 # 时间序列研究更新日志
 
+## 2026-10-31 · 发布双范围分析、两部分结果与当前展示图
+
+- 上传10月28日后的脚本分组与历史/测试归档导航；GLMM/PERMANOVA所有source、快照、共享样式和合并路径同步到子目录。
+- 增加ecosystem范围：310个生物宿主样本/7TS，排除seawater和sediment；coral仍98样本。两个范围各76个Beta-binomial TS随机截距模型，分别BH；q<0.05为8/14组合。
+- 发布两个范围已完成的PERMANOVA与GLMM主表/全精度明细，以及两部分16/28分模型结果。PERMANOVA两范围七指标BH均无通过项；两部分为既有显著组合内的探索性拆分，诊断与解释状态保留。
+- 发布当前横版热图＋森林图、全部显著曲线、two-part森林/曲线/残差、NP折线、环境着色2D/3D NMDS及诊断；交互HTML连本地依赖上传。3D固定棱轴，右侧切换NO2/氨氮，保留坐标/stress。数值、图与阅读范围记录分别保留。
+- 新增共享mc19_run_io.R：按分析类型/范围分配run/plot编号，保存方法版本和来源，过滤未完成批次并回退失效指针，兼容旧时间戳目录。
+- 文献与问题库更新、Time series-4至5交接及后续研究计划一并提交；计划与真实执行按笔记标识。
+- 发布核对58个R脚本语法、六批保存结果与BH一致性、152个GLMM模型指纹、最新完成批次读取与编号回归。LASSO服务器工具另有5项Python守卫测试通过。本次不重跑科学拟合、模拟、置换或绘图。
+
+## 2026-10-28 · 将分析源码分为GLMM与PERMANOVA
+
+- scripts/GLMM收纳12个GLMM R文件；scripts/PERMANOVA收纳18个R文件及PDF合并Python脚本。RStudio项目和独立PM11作图保留scripts外层。
+- 所有source/sys.source、源码快照/指纹生成和Python合并调用路径随分组更新；GLMM旧宿主热图通过PERMANOVA目录读取共享样式。
+- 项目导航、方法文档及知识库中的当前脚本链接同步更新，.gitignore按新位置精确放行。知识库通过协调工具归档，历史运行源码快照与模型记录保持原样。
+- 本次仅调整源码位置及路径，不运行模型、诊断模拟或正式绘图，不提交/推送Git。原始源码、移动清单和校验记录保存在archive/organization_scripts_对应时间戳目录。
+
+## 2026-10-28 · 时间序列项目目录整理与历史/测试归档
+
+- 旧MC19先导、LOTO、bootstrap、两结构Wald的8个结果/图目录整批移入archive/GLMM_MC19；旧MC8当前结果、宿主热图、DO森林图、sample_type图归入已有历史目录。
+- 模拟排版示例、Python字节码、旧R工作区/历史记录和PPT修改前备份归档；data中的20260928.pptx归入presentations，两个散落EMF归入environment_assets；旧MC8人工汇总工作簿归入archive/reports。
+- 13个历史目录原路径保留隐藏兼容联接；新增10个GLMM机器TXT指针设为隐藏且内容不变，RStudio项目状态保留并隐藏。
+- 重写当前目录导航，按2026-10-28已重画的GLMM热图/重点关系图更新入口；历史源码和原始输入保留，旧导航保存快照。
+- 按清单移动21项、1460个文件（207.92 MiB）；全部原文件逐个SHA-256与文件身份核对，移动日志和文档备份见archive/organization_project_20261028_214616。本次不重拟合、不重画、不改科研数据，不提交或推送Git。
+
 ## 2026-10-28 · 发布已完成的MC19 GLMM：76项TS随机截距Wald/BH
 
 - 发布用户于2026-10-27完成的233529批次：98个coral原始样本、7个TS、19MC×4营养盐；固定公式`cbind(MC_reads, Other_reads) ~ E_z + (1 | TS)`，Beta-binomial/logit、恒定离散度、无额外零膨胀。保留TS4/TS6，不平均，无Host/Repeat/水温项。

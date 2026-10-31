@@ -7,10 +7,10 @@
 
 ## 运行顺序
 
-1. 在 `scripts/01_data_settings.R` 设置分析范围。01由02、03自动读取。
-2. 运行 `scripts/02_test_host_time.R` 检验宿主、采样批次。02原本就按Repeat_group分析，算法未改。
-3. 运行 `scripts/03_test_season_environment.R`，或直接运行 `scripts/03_test_season_environment_batch_labels.R`，检验干湿季和8项环境指标。两个入口运行同一版代码。
-4. 在04中选择同一分析范围后，运行 `scripts/04_plot_permanova.R`。它读取02结果及 `<本次MC8结果目录>/<scope>/repeat_groups` 的新03结果。
+1. 在 `scripts/PERMANOVA/01_data_settings.R` 设置分析范围。01由02、03自动读取。
+2. 运行 `scripts/PERMANOVA/02_test_host_time.R` 检验宿主、采样批次。02原本就按Repeat_group分析，算法未改。
+3. 运行 `scripts/PERMANOVA/03_test_season_environment.R`，或直接运行 `scripts/PERMANOVA/03_test_season_environment_batch_labels.R`，检验干湿季和8项环境指标。两个入口运行同一版代码。
+4. 在04中选择同一分析范围后，运行 `scripts/PERMANOVA/04_plot_permanova.R`。它读取02结果及 `<本次MC8结果目录>/<scope>/repeat_groups` 的新03结果。
 
 ## 组成数据如何处理
 

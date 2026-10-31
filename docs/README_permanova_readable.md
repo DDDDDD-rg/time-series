@@ -2,7 +2,7 @@
 
 2026-10-27核对：v2已于2026-10-26完成，当前运行编号20261026_224333。vegan负责每次拟合的R²、F、平方和与自由度，脚本负责TS环境标签置换及P值汇总；现场状态为analysis_and_plots_complete。
 
-在RStudio打开scripts/run_permanova.R并点击Source，默认完成7项环境分析及配套图；只重画图运行scripts/04_plot_permanova.R。完整说明见[scripts/README.md](../scripts/README.md)。
+在RStudio打开scripts/PERMANOVA/run_permanova.R并点击Source，默认完成7项环境分析及配套图；只重画图运行scripts/PERMANOVA/04_plot_permanova.R。完整说明见[scripts/README.md](../scripts/README.md)。
 
 仅coral、19个MC、7项当期环境；原始样本逐行保留，无Repeat_group平均或Host_type模型。7个TS仍完整枚举5040种环境标签分配，MC样本行固定；每次调用vegan::adonis2(permutations=0)，P值仍按F的排列分布汇总，7项统一BH。其他筛选、转换、检测限和作图设置不变。
 
@@ -16,7 +16,7 @@
 
 ## 运行方式
 
-在 R/RStudio 中运行 `scripts/run_permanova.R`。它建立新的时间戳结果和图目录，完整执行以下内容，成功后更新 latest 指针。
+在 R/RStudio 中运行 `scripts/PERMANOVA/run_permanova.R`。它建立新的时间戳结果和图目录，完整执行以下内容，成功后更新 latest 指针。
 
 | 范围 | 当前可用重复组 | 分析 |
 |---|---:|---|

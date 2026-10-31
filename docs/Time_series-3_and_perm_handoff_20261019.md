@@ -8,8 +8,8 @@
 
 - 研究目标：解释 Ruegeria 内候选 MC 的组成与宿主、采样批次、季节及环境梯度的关联。群落层面使用 PERMANOVA，单个 MC 使用共同结构的 GLMM，各 MC 分别估参。
 - 当前 8 个 MC：MC0、MC6、MC10、MC15、MC21、MC25、MC507、MC520。
-- 当前完整 GLMM 结果为 `results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/`；当前完整拟合脚本为 `scripts/GLMM.R`。
-- 当前完整 PERMANOVA 结果为 `results/PERMANOVA_MC8_20261014_183535/`，已包括 Seawater、Sediment；入口为 `scripts/run_permanova.R`。
+- 当前完整 GLMM 结果为 `results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/`；当前完整拟合脚本为 `scripts/GLMM/GLMM.R`。
+- 当前完整 PERMANOVA 结果为 `results/PERMANOVA_MC8_20261014_183535/`，已包括 Seawater、Sediment；入口为 `scripts/PERMANOVA/run_permanova.R`。
 - 当前 GLMM：7 个 MC 数值有效；MC15 的 Hessian 检查失败，不能报告有效 SE、CI、p、q。DO 对 MC6、MC507 为正关联，对 MC21 为负关联，均通过计划 8 项的 BH 校正。
 - 当前 PERMANOVA：宿主类别与 TS 均显著；干湿季未检出显著差异；8 项环境筛查中仅 DO 在全样本与仅珊瑚范围均通过 BH 校正。
 - 最近讨论转到环境 Excel、2015–2025 年 PM11 表层历史数据，以及如何按独立、配对、年份分块的设计选择检验。尚未对这份 11 年环境表开展新的显著性检验。
@@ -92,7 +92,7 @@ Repeat 和计数部分的 TS 随机截距各自的 SD 从数据估计。零分�
 
 ### 4.3 当前运行和推断
 
-- 完整拟合入口：[scripts/GLMM.R](../scripts/GLMM.R)；已有结果复核入口：[scripts/GLMM_reads_diagnostics_full.R](../scripts/GLMM_reads_diagnostics_full.R)。两者职责已不同于 10 月 12 日旧交接。
+- 完整拟合入口：[scripts/GLMM/GLMM.R](../scripts/GLMM/GLMM.R)；已有结果复核入口：[scripts/GLMM/GLMM_reads_diagnostics_full.R](../scripts/GLMM/GLMM_reads_diagnostics_full.R)。两者职责已不同于 10 月 12 日旧交接。
 - `GLMM.R` 默认最多 8 个独立进程，按 CPU 和可用内存限制实际数量，内部单线程；历史参数只作起点，当前完整运行重新拟合。
 - 结果目录：[results/GLMM_Z_TS_SD_Q_MC8_20261013_185720](../results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/)。本次从 latest 导航确认其仍为当前保存的完整运行；没有在 10 月 19 日重跑。
 - 保留多起点、Hessian/梯度、积分精度、零值、正值和尾部核查。2,000 次模拟条件于拟合的 Repeat/TS/零值 TS 偏移，不是 2,000 次重新拟合。
@@ -127,7 +127,7 @@ MC15 在原始系数表中有点估计（DO 约 0.71344），但 Hessian 未正�
 - [00_model_checks.csv](../results/GLMM_Z_TS_SD_Q_MC8_20261013_185720/00_model_checks.csv) 中 7 个有效 MC 未触发当前精简诊断的主要警报；高比例校准仍有具体偏差：MC6、MC507 高尾低估，MC520 高预测组均值低估，MC0 极端最大值略超模拟范围。
 - 最新精简诊断和早期完整诊断的项目不同，不能只按“全部诊断 p 大于 0.05”判断模型改善。
 - 推荐已有展示方向：DO beta 森林图、宿主 beta 热图、条件预测曲线；补充展示 sigma(reads)、按 TS 零值校准、正值与尾部校准。预测曲线目前的参照条件和是否有置信带须从保存数据核对。
-- 当前简洁汇总工作簿：[results/Z_TS_SD_Q_模型结果与主要结论_20261013_185720.xlsx](../results/Z_TS_SD_Q_模型结果与主要结论_20261013_185720.xlsx)。
+- 当前简洁汇总工作簿：[results/Z_TS_SD_Q_模型结果与主要结论_20261013_185720.xlsx](../archive/reports/Z_TS_SD_Q_模型结果与主要结论_20261013_185720.xlsx)。
 
 ### 5.3 模型推进历史
 
@@ -218,7 +218,7 @@ DIP 的原始低于检出限记录保留，但未纳入当前 8 项环境主检�
 
 ## 8. PERMANOVA：脚本、图和交互要求
 
-- 完整分析：`scripts/run_permanova.R`；数据规则：`01_data_settings.R`；Host/TS：`02_test_host_time.R`；Season/环境：`03_test_season_environment_batch_labels.R`（旧 03 入口调用同版）。
+- 完整分析：`scripts/PERMANOVA/run_permanova.R`；数据规则：`01_data_settings.R`；Host/TS：`02_test_host_time.R`；Season/环境：`03_test_season_environment_batch_labels.R`（旧 03 入口调用同版）。
 - 两两：`05_test_pairwise_host_time.R`、`permanova_pairwise_helpers.R`；三类样本：`08_test_sample_type.R`。
 - 总体图与 3D：`04_plot_permanova.R`；两两热图：`06_plot_pairwise_permanova.R`；逐宿主高亮：`07_plot_host_highlight_panels.R`；三类作图：`09_plot_sample_type.R`；DO 柱图：`plot_DO_composition_preview.R`。
 - 当前图：`figures/PERMANOVA_MC8_20261014_183535/`，总览 `00_all_final_results.pdf`，五张独立两两热图在 `pairwise_heatmaps/`。
@@ -274,14 +274,14 @@ DIP 的原始低于检出限记录保留，但未纳入当前 8 项环境主检�
 
 ## 11. PPT、筛选理由与讲解文档
 
-- 当前主要 PPT：[timeseries_xzy_20261015.pptx](../timeseries_xzy_20261015.pptx)，备份 `timeseries_修改前备份_20261015.pptx`。用户曾由 timeseries.pptx 更名；编辑前确认指定文件，不误改 time+lasso.pptx。
+- 当前主要 PPT：[timeseries_xzy_20261015.pptx](../presentations/timeseries_xzy_20261015.pptx)，备份 `timeseries_修改前备份_20261015.pptx`。用户曾由 timeseries.pptx 更名；编辑前确认指定文件，不误改 time+lasso.pptx。
 - 旧对话最后核对主 PPT 为 15 页；涵盖营养盐、宿主/时间/季节 PERMANOVA、DO 梯度、MC 丰度、GLMM、宿主 beta 热图及最后 Lasso。
 - 第 12 页已按要求加入 Selection rationale、保留 MC15 并写 Not estimable；用户曾要求删除整份 PPT 备注。后续核对以当前实际 PPT 为准。
 - 明确给定的标签：MC10=NGP，MC15/MC0=NGP control，MC6=Denitrifying specialists。功能标签原始证据与生态筛选依据分别记录。
 - 生态筛选来源：`data/source_tables/ISA_asv.xlsx`（IndVal>0.5）、`data/Cooccurence.xlsx`（共现对 n_TS≥4）、`data/source_tables/Network.xlsx`（betweenness 全库 top 5%，部分 top 1%）。这些表的单位为 ASV，通过 ASV–MC 对应提供候选证据。
 - 既有核对：MC6、MC21 三表都有；MC507 有宿主关联与网络；MC520 有宿主关联；MC25 有共现；MC10、MC15 有网络；MC0 未列三表。部分匹配为 `WEAK_ownMC`，原始质量标记应保留。
 - IndVal 入选阈值与 p 显著性分开；表中曾有 p=0.073 的入选记录。共现 `max_abs_r` 不保留方向；网络 top 5% 是排名，后续功能解释应追溯原始证据。
-- 已交付 [timeseries_逐页讲解与初步结论_20261015.docx](../timeseries_逐页讲解与初步结论_20261015.docx)，原对话记录为 35 页，逐页解释 PPT 的读图方法、知识点、初步结论与问答，含 GLMM 方程和来源。
+- 已交付 [timeseries_逐页讲解与初步结论_20261015.docx](../presentations/timeseries_逐页讲解与初步结论_20261015.docx)，原对话记录为 35 页，逐页解释 PPT 的读图方法、知识点、初步结论与问答，含 GLMM 方程和来源。
 - PERMANOVA 的 PPT 静态图与四份嵌入 3D HTML 曾核对更新；用户要求气泡图保持完整、已附 PDF，尽量不改原有内容。
 - 最后 Lasso 的 selection rate 表示入选稳定性，区别于 p 值；候选生物学解释需结合注释来源和具体效应。
 

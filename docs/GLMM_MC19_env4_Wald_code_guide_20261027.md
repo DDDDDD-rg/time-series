@@ -1,13 +1,15 @@
 # MC19 × 4营养盐：TS随机截距Wald流程与代码解读
 
+2026-10-28目录整理补充：当前主图已重画为19×4效应热图和MC98/MC80/MC15重点关系图（各PDF/PNG）；旧五份主PDF在同批supporting_files/previous_main_figures，4份诊断仍在supporting_files/diagnostics。分析模型与Wald/BH定义不变。
+
 更新：2026-10-27。用户查看172226两结构结果后，确认后续所有当前模型统一采用TS随机截距。用户随后已完成233529的76模型批次；2026-10-28发布时核对Wald/BH、全部90个文件指纹及9份PDF页数，未重新拟合或模拟。172226的152项P/q和原图保持原样。
 
 ## 1. 从哪里运行
 
-在RStudio打开scripts/GLMM.R并点击Source，或运行：
+在RStudio打开scripts/GLMM/GLMM.R并点击Source，或运行：
 
 ```r
-source("C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series/scripts/GLMM.R", encoding = "UTF-8")
+source("C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series/scripts/GLMM/GLMM.R", encoding = "UTF-8")
 ```
 
 主入口依次分析、诊断、作图。只重做诊断用GLMM_reads_diagnostics_full.R，只重画图用plot_GLMM_MC19.R。辅助文件只定义函数，不需要逐个运行。
@@ -109,7 +111,7 @@ fit_status, inference_status, q_family_size, fit_origin
 
 每个保存的有TS模型模拟2000次响应，重抽TS随机截距而不重新拟合。DHARMa与模拟摘要评价总体/分TS零值、中心、q95和最大值等；诊断P与环境beta P用途分开。review_flags用于人工审查，不自动否定模型或要求全部诊断P>.05。
 
-曲线每MC一整页：原始98个样本点，实线为b_TS=0的固定部分，虚线为对TS分布积分的边际均值，叉号为条件TS拟合值，灰带为固定部分Wald均值区间。总览q采用三位有效数字，避免极小q显示为0.000。
+2026-10-28当前两张主图：19MC×4营养盐效应热图，以及MC98/MC80/MC15×NO2/NH4的3×2重点关系图；绘图读取保存的P/q和诊断。旧版逐MC曲线和5份主PDF已保留在previous_main_figures，诊断仍保持四营养盐各39页。
 
 ## 8. 输出位置和独立指针
 
@@ -127,14 +129,29 @@ results/GLMM_MC19_env4_TS_Wald_coral_时间戳/
    └─ wald_manifest.rds
 
 figures/GLMM_MC19_env4_TS_Wald_coral_同一时间戳/
-├─ 00_summary.pdf                # 2页
-├─ 01_NO3_effects_and_curves.pdf  # 21页
-├─ 02_NO2_effects_and_curves.pdf  # 21页
-├─ 03_NH4_effects_and_curves.pdf  # 21页
-├─ 04_DIP_effects_and_curves.pdf  # 21页
-└─ supporting_files/diagnostics/ # 诊断完整时四份PDF各39页
+├─ 01_MC19_nutrient_heatmap.pdf/.png
+├─ 02_MC98_MC80_MC15_nutrient_curves.pdf/.png
+└─ supporting_files/
+   ├─ diagnostics/              # 四份诊断PDF各39页
+   └─ previous_main_figures/    # 被替换的5份主PDF，按重画时间保留
 ```
 
 新机器指针为results和figures下的`00_latest_GLMM_MC19_env4_TS_Wald.txt`，拟合完成且指纹校验通过后才创建。当前配套入口严格读取新版本76个TS模型，不接旧152项批次。历史原图和目录不修改；旧源码在各批scripts_used以及本轮备份中保留。
 
-本轮11份修改前源码/文档备份：archive/script_backups/GLMM_before_TS_only_Wald_20261027/。仅parse与静态审计，不source/eval生产分析，不执行拟合、P提取、BH、响应模拟或正式图生成。
+2026-10-27修改源码时的11份备份位于archive/script_backups/GLMM_before_TS_only_Wald_20261027/；当时仅做parse与静态审计。用户随后完成233529批次和2026-10-28主图重画；本次目录整理只核对文件与读取路径。
+
+## 2026-10-29：coral/ecosystem范围切换
+
+当前GLMM.R、诊断及作图均读取`getOption("mc19.analysis_scope", "coral")`。控制台设置`options(mc19.analysis_scope="ecosystem")`后运行入口，将选取全部生物宿主（排除seawater/sediment）且四项营养盐完整的原始样本。当前为310样本/7TS；coral仍为98/7。公式、分母、TS等权标准化及Wald提取不变；每范围76项BH，结果CSV前列新增analysis_scope。ecosystem不复用coral的四个先导模型。
+
+运行、配套图及latest按scope分别命名。仅coral允许读取旧无scope latest和历史v2结果。独立诊断/作图必须选择对应范围，不能通过手动指定results_dir混用。参见[scripts/GLMM说明](../scripts/GLMM/README.md)。本轮未执行新拟合或作图。
+
+## 2026-10-29：全部显著关系曲线
+
+Coral和ecosystem共用同一作图规则：从当前范围保存的76模型结果中选择数值有效且`beta_q_value < 0.05`的每一对MC×营养盐，不要求同一MC在多个指标显著。按MC分组及环境配置顺序，每页最多3个MC，同MC的显著指标同行（2–4列，列宽固定），输出`02_all_significant_nutrient_curves.pdf`及逐页PNG；面板/页码索引在supporting_files/significant_curve_index.csv。没有显著关系时输出一页英文说明，热图仍照常生成。
+
+保持16pt、英文、无总图题、TS点色、原始全部样本、b_TS=0预测线及95%CI、检出限空心点。同MC的显著面板统一纵轴；少数极端值压缩主体时放大主图，完整范围小图保留全部观测值。热图及76项BH原值不变。重画时把旧三MC曲线和被替换的分页曲线移入supporting_files/previous_main_figures，避免旧页混入。只运行plot_GLMM_MC19.R即可，无需重跑GLMM。此次仅修改与无绘图检查。
+
+2026-10-29版式修订：同一MC的所有显著指标放在同一行、同一页（最多4列，列宽固定，页面宽度随列数扩展）；每页最多3个MC，单指标MC独占一行。底部预留1.4英寸、行间1英寸，轴标签和三行简短图注分开。相同MC主图纵轴一致；极端值压缩曲线时主图改为放大范围，标记Full range的小图显示全部原始点与完整纵轴，自动选择较少遮挡曲线的上方角落。移除原1.8倍纵轴留白。只修改源码、检查分组及版式坐标，不运行正式绘图。
+
+2026-10-29当前版：用户确认大图必须full range，小图显示局部区域。大图覆盖全部原始点及95%CI，同MC统一纵轴，不加1.8倍留白。需要放大时，在大图右侧独立留出Zoom小图区（包含边框、刻度、文字的区域也不与大图相交），相同x范围、缩小y范围；不再向大图绘图区内叠放小图。列距自动增至7.8英寸，主绘图区宽度和16pt基准字号保持。显著组合/同行同页/模型/Pq/热图均不变。supporting_files/curve_axis_ranges.csv记录主图和放大图范围。此次只修改与只读/坐标检查，现有图由用户重画。

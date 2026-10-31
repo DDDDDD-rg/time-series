@@ -1,0 +1,21 @@
+MC19 / coral / 7项当期环境
+输入： C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series/data/PERMANOVA_input_MC19_env7_20261026.xlsx
+原始样本： 98 ；有效TS： 7
+每个样本保留一行；无Repeat_group或任何样本平均；无Host_type模型。
+原始Ruegeria比例逐元素平方根后计算Bray–Curtis；19个MC不重新归一化。
+每种TS分配的R²、F、平方和与自由度均直接读取vegan::adonis2(permutations=0)。
+所有环境共用 5040 种TS行排列，含原始顺序。
+p值=所有TS排列中F不小于实际F的比例；7项环境p值统一BH校正。
+低于检出限采用输入表中的L/2；保留原始报告值与删失标记。
+此置换推断依赖TS环境标签在零假设下可交换；结果解释为探索性关联。
+TS8当期环境缺测，不补值；不运行季节、宿主或两两比较；作图由04读取保存结果。
+顶层environment_results.csv为主要结果；完整结果、输入、置换记录、日志和快照均在supporting_files。
+
+        Factor N_samples N_TS     R2_raw    F_raw      P_raw  P_BH_raw Significance
+  Salinity_psu        98    7 0.05121549 5.182091 0.29603175 0.4144444           ns
+         SST_C        98    7 0.02348798 2.309082 0.70456349 0.7045635           ns
+            pH        98    7 0.04145935 4.152247 0.44047619 0.5138889           ns
+ Nitrate_mgN_L        98    7 0.05339042 5.414566 0.24365079 0.4144444           ns
+ Nitrite_mgN_L        98    7 0.09242819 9.776754 0.04761905 0.1861111           ns
+ Ammonia_mgN_L        98    7 0.09059796 9.563872 0.05317460 0.1861111           ns
+     DIP_mgP_L        98    7 0.06525560 6.701873 0.14880952 0.3472222           ns

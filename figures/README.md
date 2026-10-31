@@ -1,42 +1,46 @@
-# 图目录导航
+# 当前图导航
 
-2026-10-28核对：当前76模型TS-only Wald图已完成，位于[GLMM_MC19_env4_TS_Wald_coral_20261027_233529/](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/)。顶层5份合并PDF：总览2页，NO3/NO2/NH4/DIP各21页；supporting_files/diagnostics内4份诊断PDF各39页。合计9份242页，与同批76项BH结果对应。原始点、固定部分/边际曲线与条件TS拟合值保留。[运行及重画说明](../scripts/README.md)。
+更新：2026-10-31。主要展示新版talk图、原GLMM显著关系曲线及两部分分析图。
 
-以下为历史流程及结果记录，当前运行按上述TS-only入口执行。
+已集中整理：[MC19_阶段汇报结果图_v01](MC19_阶段汇报结果图_v01/00_阅读说明.md)。含39个PDF、28个PNG、2个交互3D HTML及其依赖，按八类内容分文件夹、以Coral/Ecosystem清楚命名；包内文件清单记录原路径和SHA-256。原输出保留原位。
 
-2026-10-27当前Wald作图代码已改、未运行：GLMM_MC19_env4_Wald_coral_时间戳/顶层一份3页总览及四份各22页营养盐效应/曲线PDF；4份诊断补充在supporting_files/diagnostics。当前plot_GLMM_MC19.R只读152模型Wald结果，不拟合或模拟。历史153110 bootstrap图另用plot_GLMM_MC19_full_data.R。[重要代码说明](../docs/GLMM_MC19_env4_Wald_code_guide_20261027.md)。
+| 内容 | Coral | Ecosystem |
+|---|---|---|
+| 19MC热图＋森林图 | [查看](MC19_talk_coral_20261031_153730/MC19_heatmap_forest.pdf) | [查看](MC19_talk_ecosystem_20261031_153730/MC19_heatmap_forest.pdf) |
+| NO₂二维NMDS | [查看](MC19_talk_coral_20261031_153730/NMDS2D_Nitrite_mgN_L.pdf) | [查看](MC19_talk_ecosystem_20261031_153730/NMDS2D_Nitrite_mgN_L.pdf) |
+| 氨氮二维NMDS | [查看](MC19_talk_coral_20261031_153730/NMDS2D_Ammonia_mgN_L.pdf) | [查看](MC19_talk_ecosystem_20261031_153730/NMDS2D_Ammonia_mgN_L.pdf) |
+| NO₂／氨氮三维交互图（右侧切换） | [查看](MC19_talk_coral_20261031_153730/NMDS3D_nutrients.html) | [查看](MC19_talk_ecosystem_20261031_153730/NMDS3D_nutrients.html) |
+| NMDS诊断 | [查看](MC19_talk_coral_20261031_153730/NMDS_diagnostics.csv) | [查看](MC19_talk_ecosystem_20261031_153730/NMDS_diagnostics.csv) |
+| 原GLMM所有显著曲线 | [查看](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/02_all_significant_nutrient_curves.pdf) | [查看](GLMM_MC19_env4_TS_Wald_ecosystem_20261029_123804/02_all_significant_nutrient_curves.pdf) |
+| 两部分效应 | [查看](MC19_two_part_coral_legacy_plot001/two_part_effects.pdf) | [查看](MC19_two_part_ecosystem_legacy_plot001/two_part_effects.pdf) |
+| 两部分曲线 | [查看](GLMM_MC19_two_part_coral_20261031_153730/two_part_curves.pdf) | [查看](GLMM_MC19_two_part_ecosystem_20261031_153730/two_part_curves.pdf) |
+| 两部分残差审查 | [查看](GLMM_MC19_two_part_coral_20261031_153730/residual_review.pdf) | [查看](GLMM_MC19_two_part_ecosystem_20261031_153730/residual_review.pdf) |
 
-2026-10-27：完整数据推断作图源码已修改、尚未运行。新推断结束后，输出`GLMM_MC19_nitrate_full_data_时间戳/00_full_data_inference.pdf`七页：全98样本、完整beta/近似区间、4MC曲线及beta P/q；注明高硝酸盐集中于TS4/TS6。重画入口`plot_GLMM_MC19_full_data.R`或默认模式的`plot_GLMM_MC19.R`，只读保存结果。重画原先导图则将后者plot_mode设为"pilot"。[运行说明](../scripts/README.md)。
+- [N/P四指标随TS折线](MC19_talk_coral_20261031_153730/NP_by_TS.pdf)：两个范围共用水质表。
+- Coral氨氮是对照面板。Ecosystem二维stress约.220且最佳解未重复；三维约.157已重复确认。三维轴对PDF/PNG是投影。HTML与依赖目录一起保存。
+- [旧图归档与清单](../archive/obsolete_outputs_20261031_155512/README.md)：旧独立热图、旧主图备份、旧PERMANOVA完整展示套图。旧套图其它环境/组成等补充完整保留，原路径用隐藏联接兼容。
+- [Coral原诊断](GLMM_MC19_env4_TS_Wald_coral_20261027_233529/supporting_files/diagnostics/) / [ecosystem原诊断](GLMM_MC19_env4_TS_Wald_ecosystem_20261029_123804/supporting_files/diagnostics/)。
+- [PM11背景图](PM11_timeseries_2021_2025_surface_top_20261009_180827/)、[可编辑环境源文件](environment_assets/)、[Prism](TS-ENV折线图.prism)。
+- [历史PERMANOVA图](../archive/PERMANOVA/figures/) / [历史GLMM图](../archive/GLMM_figures/)。
+- [当前结果](../results/README.md)。
 
-逐TS留一已由用户完成：[140106五页对照图](GLMM_MC19_nitrate_LOTO_20261027_140106/00_LOTO_stability.pdf)。已核对4个MC页面；图注与横轴重叠的源码已修正，原PDF未重画。单独刷新用plot_GLMM_MC19_LOTO.R，不拟合或模拟；原120255两份PDF不覆盖。[说明](../scripts/README.md)。
 
-2026-10-27：MC19 GLMM先导120255已由用户运行，图在[同名目录](GLMM_MC19_nitrate_pilot_20261027_120255/)，分别为7页效应/曲线、17页诊断PDF。QQ页重复标题的排版源码已修正，原PDF尚未重画；将plot_GLMM_MC19.R的plot_mode设为"pilot"后可刷新，不拟合、不模拟。[运行说明](../scripts/README.md)。
+## 2026-10-31：字体/布局统一更新
 
-2026-10-27核对。当前PERMANOVA为MC19 coral / env7 / v2，运行编号20261026_224333。
+当前MC19主图、两部分曲线/残差、NMDS Shepard与原GLMM诊断已用本地R重画并覆盖原路径；字体放大加粗，热图＋森林图压缩空白。旧版备份和发布清单位于[style_refresh_run001](../archive/style_refresh_run001/README.md)。
 
-| 当前图 | 入口 |
-|---|---|
-| 总体结果与NMDS（10页） | [00_1_总体结果与NMDS.pdf](PERMANOVA_MC19_env7_coral_samples_20261026_224333/00_1_总体结果与NMDS.pdf) |
-| 环境与MC时间变化（3页） | [00_2_环境与MC时间变化.pdf](PERMANOVA_MC19_env7_coral_samples_20261026_224333/00_2_环境与MC时间变化.pdf) |
-| 环境梯度下MC组成（7页） | [00_3_环境梯度下MC组成.pdf](PERMANOVA_MC19_env7_coral_samples_20261026_224333/00_3_环境梯度下MC组成.pdf) |
-| 原始单图、PNG、坐标和来源清单 | [supporting_files/](PERMANOVA_MC19_env7_coral_samples_20261026_224333/supporting_files/) |
-| 当前主要结果 | [environment_results.csv](../results/PERMANOVA_MC19_env7_coral_samples_20261026_224333/environment_results.csv) |
+| 范围 | 2D stress | 3D stress |
+|---|---:|---:|
+| Coral | 0.178246 | 0.133440 |
+| Ecosystem | 0.220116 | 0.156899 |
 
-## 历史PERMANOVA
+同范围NO2/氨氮使用同一套各维度坐标。3D轴名及统计说明固定在图外，原始P和BH q分别标记；本次只改样式，没有重新计算NMDS或统计结果。
 
-- [MC19 v1（2026-10-26 21:51）](../archive/PERMANOVA/figures/PERMANOVA_MC19_env7_coral_samples_20261026_215151/)。
-- [MC8（2026-10-14）](../archive/PERMANOVA/figures/PERMANOVA_MC8_20261014_183535/)。
-- [其他历史PERMANOVA图、两两热图与高亮图](../archive/PERMANOVA/figures/)。
 
-## 其他已有图与可编辑源文件
+3D更新：轴线和刻度已固定到同一组空间棱上，随立方体整体旋转，不再自动换棱。每个范围使用一张整合图，右侧选择NO2-N或Ammonia-N；切换保持当前视角与全部坐标，只更新颜色/色标/原PERMANOVA统计说明。原单指标HTML入口也已覆盖为可切换版本。
 
-| 内容 | 位置 |
-|---|---|
-| 既有GLMM宿主热图 | [GLMM_host_beta_heatmap_20261014_185246/](GLMM_host_beta_heatmap_20261014_185246/) |
-| DO系数森林图 | [GLMM_summary/](GLMM_summary/) |
-| 历史HOST/Seawater/Sediment图 | [sample_type_20261014_191318/](sample_type_20261014_191318/) |
-| PM11时间序列 | [PM11_timeseries_2021_2025_surface_top_20261009_180827/](PM11_timeseries_2021_2025_surface_top_20261009_180827/) |
-| 环境图及AI/Prism/EMF源文件 | [environment_assets/](environment_assets/) |
-| 本目录新增Prism源文件 | [TS-ENV折线图.prism](TS-ENV折线图.prism) |
+## 当前PPT横版布局
 
-机器读取的latest指针保持原路径与内容并设为隐藏；历史目录旧位置保留隐藏兼容联接。HTML和同名_files依赖目录整组保存。[更新日志](../CHANGELOG.md)记录本次整理与验证。
+热图＋森林图保持16:9：热图加宽、森林面板收窄，MC编号、英文筛选依据和完整置信区间保留。NMDS静态图（含3D轴对投影及Shepard）、N/P折线、two-part森林图已统一为16:9。原GLMM显著曲线每页最多2个MC，同MC同行同页，Coral共3页、ecosystem共4页；主图完整范围、右侧Zoom保留。
+
+已经清楚的横版two-part曲线/残差和GLMM补充诊断保留原布局。全部仅基于保存结果重画，P/q、预测和NMDS坐标不变，交互3D保持现有版本。覆盖前备份、源码及核对记录见[本次归档](../archive/ppt_landscape_run001/README.md)。

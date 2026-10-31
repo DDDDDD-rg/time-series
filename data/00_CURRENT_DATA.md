@@ -1,41 +1,24 @@
-2026-10-28：当前GLMM仍使用下述MC19工作簿和原始MC计数表，范围已扩展为19MC×4营养盐、仅TS随机截距的76模型；用户已完成233529批次，98coral/7TS。输入路径和计数均保持原样。[当前主结果](../results/GLMM_MC19_env4_TS_Wald_coral_20261027_233529/00_result.csv)。
+# 当前输入与数据来源
 
-2026-10-27：新GLMM先导从本层`PERMANOVA_input_MC19_env7_20261026.xlsx`读取样本及TS环境，并从`mc/MC_abundance_absolute.tsv`读取原始计数、计算全部Ruegeria reads分母。MC10/MC6/MC95/MC376与硝酸盐的8个有/无TS模型已由用户运行，批次120255；98个coral样本、7TS，数值完成但诊断待审，P/q未校准。[运行说明](../scripts/README.md)。不生成或读取旧MC8版GLMM输入表。
+更新：2026-10-28。当前GLMM与PERMANOVA共用MC19工作簿；原始输入内容未修改。
 
-当前结果入口见[项目首页](../README.md)。以下为2026-10-11历史数据转换记录，其中MC8“当前/最新”表述只适用于当时。
-
-# 当前分析输入 · 2026-10-11
-
-现在使用这两份文件（均在本文件同一层）：
-
-| 用途 | 最新文件 | 数据规模 |
-|---|---|---|
-| GLMM | [GLMM_input_MC8_20261011.xlsx](GLMM_input_MC8_20261011.xlsx) | Input_long：400个样本 × 8个MC = 3,200行 |
-| PERMANOVA | [PERMANOVA_input_MC8_20261011.xlsx](PERMANOVA_input_MC8_20261011.xlsx) | Community：400行、8个MC；Metadata：400行 |
-
-MC顺序：MC6、MC507、MC21、MC520、MC10、MC15、MC0、MC25。重复提及的MC507仅保留一次。
-
-MC0按New_ID从原始MC绝对/相对丰度表匹配补入。其他7个保留MC的丰度及所有样本元数据已逐项核对。全部零值保留；相对丰度分母仍为全部Ruegeria reads，不按8个MC重新归一化。
-
-每个MC保留400条记录。DO完整的348条记录属于TS1–TS7、103个Repeat_group；TS8的52条DO缺测记录仍在输入表中，保持空白。DO_c仍为DO_mg_L−6.3。
-
-## 文件夹怎么找
-
-| 位置 | 内容 |
+| 文件/目录 | 用途 |
 |---|---|
-| 本层 | 两份最新MC8输入、本说明 |
-| source_tables/ | 原始DNA表、样本元数据、指示种/网络资料 |
-| mc/ | 原始MC绝对与相对丰度TSV；未修改 |
-| asv/ | 原始ASV资料；未修改 |
-| water_quality/ | PM11原水质CSV及营养盐/Prism制图表 |
-| archive/ | 旧MC11输入及之前的GLMM备份；保留原文件内容 |
+| [PERMANOVA_input_MC19_env7_20261026.xlsx](PERMANOVA_input_MC19_env7_20261026.xlsx) | 当前样本元数据、19MC比例与TS环境；Community/Metadata/Environment_TS/ReadMe四表 |
+| [mc/MC_abundance_absolute.tsv](mc/MC_abundance_absolute.tsv) | GLMM原始MC计数；分母为全部Ruegeria MC reads |
+| [mc/](mc/) | 原始MC绝对和相对丰度表 |
+| [Environment_noDO_Nsplit_20261026.xlsx](Environment_noDO_Nsplit_20261026.xlsx)、[TS_environment_noDO_Nsplit_20261026.csv](TS_environment_noDO_Nsplit_20261026.csv) | 当期/历史环境整理，7项分析指标及DIN参考 |
+| [source_tables/](source_tables/) | 原始DNA、样本元数据、指示种/网络等来源 |
+| [asv/](asv/) | 原始ASV资料 |
+| [water_quality/](water_quality/) | PM11水质CSV和营养盐制图资料 |
+| [Cooccurence.xlsx](Cooccurence.xlsx) | 原网络资料工作簿，保留 |
 
-Cooccurence.xlsx当前被其他程序占用，暂留data顶层；本次未关闭该程序或修改该文件。
+当前有效环境覆盖TS1–TS7；coral逐样本分析共98个样本。GLMM用4种营养盐，PERMANOVA用7项环境；具体筛选、标准化和检测限L/2规则见[运行说明](../scripts/README.md)。
 
-## 脚本入口
+## 历史输入与归类
 
-- scripts/GLMM.R、scripts/GLMM_reads_diagnostics_full.R 已指向本层新版GLMM输入，默认读取全部8个MC。
-- scripts/01_data_settings.R、scripts/run_permanova.R 已指向本层新版PERMANOVA输入；02、03、05继续通过01读取设置。
-- scripts/plot_PM11_timeseries_5years.R 已指向water_quality中的原水质CSV。
+- [GLMM_input_MC8_20261011.xlsx](GLMM_input_MC8_20261011.xlsx)、[PERMANOVA_input_MC8_20261011.xlsx](PERMANOVA_input_MC8_20261011.xlsx)为历史MC8输入。保留原位置，供历史源码读取。
+- [archive/](archive/)存放更早MC11输入及备份。
+- `20260928.pptx`属于汇报文件，已移到[presentations/20260928.pptx](../presentations/20260928.pptx)。
 
-MC8 PERMANOVA已重新运行：[最新结果总览](../results/PERMANOVA_MC8_20261011_225709/00_PERMANOVA_summary.html)。旧MC11结果归入results/PERMANOVA_MC11_history，旧图归入figures/PERMANOVA_MC11_history。当前MC8的GLMM已完成reads零值和波动四候选比较：[最新GLMM总览](../results/GLMM_joint_reads_MC8_20261012_001527/00_all_MC_joint_summary.html)。
+旧版输入导航保存在[本次文档备份](../archive/organization_project_20261028_214616/documentation_before/data/00_CURRENT_DATA.md)。

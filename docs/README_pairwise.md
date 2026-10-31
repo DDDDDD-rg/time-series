@@ -3,7 +3,7 @@
 
 # 宿主和采样批次两两多重比较
 
-2026-10-06 新增 scripts/05_test_pairwise_host_time.R。它自动读取01，在选定范围内独立进行两两比较；不要求先运行02。
+2026-10-06 新增 scripts/PERMANOVA/05_test_pairwise_host_time.R。它自动读取01，在选定范围内独立进行两两比较；不要求先运行02。
 
 2026-10-11已对新版8个MC完成全宿主与仅珊瑚两套两两检验，结果随本轮整体分析保存。
 
@@ -11,8 +11,8 @@
 
 ## 怎么运行
 
-1. 在 scripts/01_data_settings.R 选择 analysis_scope：all_hosts 或 coral，并设置置换次数。
-2. 打开 scripts/05_test_pairwise_host_time.R，从头运行。
+1. 在 scripts/PERMANOVA/01_data_settings.R 选择 analysis_scope：all_hosts 或 coral，并设置置换次数。
+2. 打开 scripts/PERMANOVA/05_test_pairwise_host_time.R，从头运行。
 3. 默认 pairwise_targets = c("Host_type", "TS")，两类都做；需要单类时改成 "Host_type" 或 "TS"。
 4. 在 <本次MC8结果目录>/<scope>/pairwise 查看结果。旧整体检验结果在原目录。
 5. 04选择与01/05相同范围，再从头运行；它读取05结果自动给图例添加字母。04默认show_pairwise_letters=TRUE；FALSE保留无字母图例。
