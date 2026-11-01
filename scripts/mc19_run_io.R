@@ -178,14 +178,17 @@ mc19_publish_plot <- function(project_dir, kind, scope, path) {
     writeLines(enc2utf8(normalizePath(path, winslash="/", mustWork=TRUE)), p, useBytes=TRUE)
   invisible(path)
 }
-mc19_latest_talk <- function(project_dir, scope) {
+mc19_latest_talk <- function(project_dir, scope, source="", required=character()) {
   prefix <- mc19_io_prefix("talk", scope)
   paths <- list.files(file.path(project_dir, "figures"),
     pattern=paste0("^(", prefix, "_run[0-9]+|MC19_talk_", scope, "_[0-9]{8}_[0-9]{6})$"), full.names=TRUE)
   good <- vapply(paths, function(p) {
+    if(length(required) && !all(file.exists(file.path(p,required)))) return(FALSE)
     m <- mc19_io_record(p)
-    if (!is.null(m)) return(identical(m$kind, "talk") && identical(m$scope, scope) && identical(m$state, "complete"))
-    file.exists(file.path(p, "README.txt"))
+    same_source <- function(x) !nzchar(source) || identical(normalizePath(x,winslash='/',mustWork=FALSE),normalizePath(source,winslash='/',mustWork=TRUE))
+    if (!is.null(m)) return(identical(m$kind, "talk") && identical(m$scope, scope) && identical(m$state, "complete") && same_source(m$source))
+    readme <- file.path(p,'README.txt')
+    file.exists(readme) && (!nzchar(source) || paste('GLMM source:',normalizePath(source,winslash='/')) %in% readLines(readme,warn=FALSE))
   }, logical(1))
   paths <- paths[good]
   if (!length(paths)) stop("No completed talk figures for ", scope)
@@ -193,4 +196,24 @@ mc19_latest_talk <- function(project_dir, scope) {
   numbers <- numeric(length(paths))
   numbers[numbered] <- as.numeric(sub(".*_run", "", basename(paths[numbered])))
   normalizePath(paths[order(numbered, numbers, basename(paths), decreasing=TRUE)[1]], winslash="/", mustWork=TRUE)
+}
+
+# Locate a completed plot revision of this exact result; never use another run.
+mc19_latest_plot <- function(project_dir,kind,scope,source,required=character()) {
+  source <- normalizePath(source,winslash='/',mustWork=TRUE)
+  paths <- list.dirs(file.path(project_dir,'figures'),recursive=FALSE,full.names=TRUE)
+  candidates <- lapply(paths,function(p) {
+    if(!all(file.exists(file.path(p,required)))) return(NULL)
+    m <- mc19_io_record(p)
+    if(!is.null(m) && nrow(m)==1L && identical(m$kind,kind) && identical(m$scope,scope) &&
+       identical(m$state,'complete') && identical(normalizePath(m$source,winslash='/',mustWork=FALSE),source))
+      return(data.frame(path=p,revision=if(grepl('_plot[0-9]+$',p)) as.numeric(sub('.*_plot','',p)) else 0,time=m$finished_at))
+    # Legacy same-name folders predate run_record; caller verifies their data.
+    if(identical(basename(p),basename(source))) return(data.frame(path=p,revision=-1,time=''))
+    NULL
+  })
+  candidates <- Filter(Negate(is.null),candidates)
+  if(!length(candidates)) stop('No matching completed plot/cache for ',kind,'/',scope,'; source: ',source)
+  x <- do.call(rbind,candidates)
+  normalizePath(x$path[order(x$revision,x$time,decreasing=TRUE)[1]],winslash='/',mustWork=TRUE)
 }

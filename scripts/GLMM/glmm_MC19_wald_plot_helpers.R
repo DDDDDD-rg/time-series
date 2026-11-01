@@ -122,12 +122,14 @@ mc19_curve_limits <- function(all_panels, entries, grids) {
 }
 
 # A dedicated right-hand zoom area; even its white frame stays outside the main plot.
-mc19_curve_panel_boxes <- function(row, column, width, height) {
+mc19_curve_panel_boxes <- function(row, column, width, height, rows=2L) {
   ytop <- 1-(1.0+(row-1L)*4.5)/height
+  main_height <- if(rows==1L) 6.4 else 3.3
+  zoom_height <- if(rows==1L) 3.1 else 1.8
   list(main=c((1.0+(column-1L)*9.0)/width,(5.6+(column-1L)*9.0)/width,
-      ytop-3.3/height,ytop),
+      ytop-main_height/height,ytop),
     zoom=c((6.35+(column-1L)*9.0)/width,(8.7+(column-1L)*9.0)/width,
-      ytop-1.8/height,ytop-.12/height))
+      ytop-zoom_height/height,ytop-.12/height))
 }
 
 mc19_main_curves <- function(results, entries, grids, cfg, environment_table, panels,
@@ -159,6 +161,8 @@ mc19_main_curves <- function(results, entries, grids, cfg, environment_table, pa
       graphics::clip(box[1],box[2],box[3],box[4])
       yt <- pretty(c(0,ymax),if(zoom) 2 else 4); yt <- yt[yt>=0 & yt<=ymax]
       graphics::segments(box[1],py(yt),box[2],py(yt),col="#ECEFF1",lwd=.7)
+      if(r$environment %in% c('Nitrite_mgN_L','DIP_mgP_L'))
+        graphics::segments(px(.002),box[3],px(.002),box[4],lty=2,col='#666666',lwd=1.2)
       graphics::polygon(px(c(g$E_raw,rev(g$E_raw))),
         py(100*c(g$Wald95_low_pilot,rev(g$Wald95_high_pilot))),border=NA,col="#D9DDE1")
       offsets <- ave(seq_len(nrow(d)),d$TS,FUN=function(v) seq(-.009,.009,length.out=length(v)))
@@ -192,16 +196,17 @@ mc19_main_curves <- function(results, entries, grids, cfg, environment_table, pa
     }
     for (k in seq_len(nrow(panels))) {
       r <- panels[k,,drop=FALSE]
-      boxes <- mc19_curve_panel_boxes(r$row,r$column,width,height)
+      boxes <- mc19_curve_panel_boxes(r$row,r$column,width,height,max(panels$row))
       panel(r,boxes$main,LETTERS[k])
       if (limits[[r$MC_ID]]$zoomed) panel(r,boxes$zoom,"",zoom=TRUE)
     }
   }
   if (nrow(panels)) {
-    graphics::text(.5,.98/height,"Line: b_TS = 0; band: 95% CI; open points: below detection (L/2).",cex=.82)
-    graphics::text(.5,.62/height,"Main panels: full range; right-hand panels: y-axis zoom (same x-axis).",cex=.82)
+    graphics::text(.5,1.02/height,"Line: b_TS = 0; band: 95% CI; open points: nutrient below LOD (L/2).",cex=.82)
+    graphics::text(.5,.74/height,"Main panels: full range; right-hand panels: y-axis zoom (same x-axis).",cex=.82)
+    graphics::text(.5,.46/height,"Dashed lines: NO2-N LOD = 0.002 mg N/L; DIP LOD = 0.002 mg P/L.",cex=.82)
   }
-  graphics::text(.5,.26/height,sprintf("%s; beta per nutrient SD; BH q (%d tests). n = %d; %d TS.",
+  graphics::text(.5,.18/height,sprintf("%s; MC / total Ruegeria reads; beta per nutrient SD; BH q (%d tests). n = %d; %d TS.",
     cfg$analysis_scope,cfg$q_family_size,results$n_samples[1],results$n_TS[1]),cex=.82)
 }
 
@@ -345,6 +350,6 @@ mc19_wald_plots <- function(cfg, run_dir = "") {
     "Replot only reads saved models, P/q, and diagnostics. No fitting/simulation/P recalculation."),
     file.path(support, "README.txt"))
   mc19_publish_plot(cfg$project_dir, "GLMM", cfg$analysis_scope, figure_dir)
-  cat("Wald合并图目录：", figure_dir, "\n", sep = "")
+  cat("Wald鍚堝苟鍥剧洰褰曪細", figure_dir, "\n", sep = "")
   invisible(figure_dir)
 }

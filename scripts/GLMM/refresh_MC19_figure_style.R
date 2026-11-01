@@ -22,13 +22,26 @@ local({
     options(mc19.analysis_scope=scope)
     cfg <- e$mc19_wald_config(project_dir,scope)
     run <- e$mc19_wald_read_run(cfg)
-    old_glmm <- file.path(project_dir,'figures',basename(run$run_dir))
-    glmm_fig <- file.path(destination,basename(run$run_dir))
+    old_glmm <- e$mc19_latest_plot(project_dir,'GLMM',scope,run$run_dir,'supporting_files/prediction_curves.csv')
+    glmm_fig <- file.path(destination,basename(old_glmm))
     dir.create(glmm_fig,recursive=TRUE,showWarnings=FALSE)
     entries <- lapply(run$manifest$model_files,readRDS)
     # Reuse saved prediction values exactly; do not call predict or refit.
     curves <- read.csv(file.path(old_glmm,'supporting_files','prediction_curves.csv'))
+    snapshot <- read.csv(file.path(old_glmm,'supporting_files','result_snapshot.csv'))
+    keys <- e$mc19_wald_key(run$results$MC_ID,run$results$environment,run$results$model)
+    ix <- match(keys,e$mc19_wald_key(snapshot$MC_ID,snapshot$environment,snapshot$model))
+    if(anyNA(ix) || !all(vapply(c('beta_per_TS_SD','SE','beta_P_value','beta_q_value'),
+      function(n) e$mc19_same(run$results[[n]],snapshot[[n]][ix],tolerance=1e-7),logical(1)))) stop('Plot cache source does not match the selected GLMM result.')
     grids <- split(curves,e$mc19_wald_key(curves$MC_ID,curves$environment,curves$model))
+    for(key in names(grids)) {
+      if(!key %in% names(entries)) stop('Unknown prediction key: ',key)
+      g <- grids[[key]];f <- entries[[key]]$fit;b <- glmmTMB::fixef(f)$cond
+      X <- cbind(1,g$E_z);eta <- as.numeric(X%*%b);se <- sqrt(rowSums((X%*%vcov(f)$cond)*X))
+      if(!e$mc19_same(g$fixed_part,plogis(eta),1e-8) ||
+         !e$mc19_same(g$Wald95_low_pilot,plogis(eta-1.96*se),1e-8) ||
+         !e$mc19_same(g$Wald95_high_pilot,plogis(eta+1.96*se),1e-8)) stop('Prediction cache/model mismatch: ',key)
+    }
     environment <- read.csv(file.path(run$support,'input_environment_TS.csv'))
     selected <- e$mc19_significant_curve_rows(run$results,cfg)
     dir.create(file.path(glmm_fig,'supporting_files'),recursive=TRUE,showWarnings=FALSE)
@@ -55,7 +68,8 @@ local({
         }
       },width=15,height=12)
     }
-    talk_name <- paste0('MC19_talk_',scope,'_20261031_153730')
+    old_talk <- e$mc19_latest_talk(project_dir,scope,run$run_dir,c('NMDS2D.rds','NMDS3D.rds'))
+    talk_name <- basename(old_talk)
     talk <- file.path(destination,talk_name)
     dir.create(talk,recursive=TRUE,showWarnings=FALSE)
     e$mc19_export_heatmap_forest(file.path(talk,'MC19_heatmap_forest'),run$results,cfg)
@@ -67,20 +81,25 @@ local({
       e$mc19_io_update(path,state='complete',finished_at=e$mc19_io_time());invisible(path)
     }
     ctx <- e$mc19_plot_context()
+    glmm_input_md5 <- run$manifest$input_hashes$md5[basename(run$manifest$input_hashes$path)==basename(cfg$workbook)]
+    if(!identical(ctx$input$input_md5,glmm_input_md5)) stop('GLMM/PERMANOVA input fingerprints differ.')
     # Copy only when a new staging folder has no cache. Cache-only mode fails
     # rather than computing any new NMDS solution, even if best repeats is zero.
     for(k in 2:3) {
       cache <- file.path(talk,paste0('NMDS',k,'D.rds'))
-      if(!file.exists(cache)) stopifnot(file.copy(file.path(project_dir,'figures',talk_name,basename(cache)),cache))
+      if(!file.exists(cache)) stopifnot(file.copy(file.path(old_talk,basename(cache)),cache))
     }
     e$mc19_talk_nmds(ctx,talk,c(2L,3L),cache_only=TRUE)
     two <- e$mc19_latest_result(project_dir,'two_part',scope)
-    options(mc19.two_part.figure_dir=file.path(destination,basename(two)))
+    old_two <- e$mc19_latest_plot(project_dir,'two_part',scope,two,c('two_part_curves.pdf','residual_review.pdf'))
+    options(mc19.two_part.figure_dir=file.path(destination,basename(old_two)))
     e$mc19_tp_plot(two,project_dir,parts=getOption('mc19.style.two_part.parts',c('forest','curves','residual')))
     # Keep the most recent standalone forest revision in sync as well.
-    latest_forest <- file.path(destination,paste0('MC19_two_part_',scope,'_legacy_plot001'))
-    options(mc19.two_part.figure_dir=latest_forest)
-    e$mc19_tp_plot(two,project_dir,parts='forest')
+    latest_forest <- e$mc19_latest_plot(project_dir,'two_part',scope,two,'two_part_effects.pdf')
+    if(basename(latest_forest)!=basename(old_two)) {
+      options(mc19.two_part.figure_dir=file.path(destination,basename(latest_forest)))
+      e$mc19_tp_plot(two,project_dir,parts='forest')
+    }
   }
   message('Style-only refresh complete: ',destination)
 })

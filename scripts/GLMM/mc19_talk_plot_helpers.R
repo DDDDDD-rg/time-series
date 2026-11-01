@@ -85,13 +85,19 @@ mc19_np_plot <- function(environment,out) {
     data.frame(TS=e$TS,Date=as.Date(e$Water_quality_date),Indicator=labs[j],Value=e[[fields[j]]],Censored=grepl('<',raw,fixed=TRUE))
   }))
   d$Indicator <- factor(d$Indicator,levels=labs)
-  p <- ggplot2::ggplot(d,ggplot2::aes(Date,Value))+ggplot2::geom_line()+
+  lod <- data.frame(Indicator=factor(labs[c(2,4)],levels=labs),LOD=.002,
+    Date=as.Date(e$Water_quality_date[1]),Label_y=c(.0033,.0045),Label='LOD = 0.002')
+  p <- ggplot2::ggplot(d,ggplot2::aes(Date,Value))+
+    ggplot2::geom_hline(data=lod,ggplot2::aes(yintercept=LOD),inherit.aes=FALSE,linetype=2,colour='grey35',linewidth=.75)+
+    ggplot2::geom_line()+
     ggplot2::geom_point(ggplot2::aes(shape=Censored),size=3)+ggplot2::scale_shape_manual(values=c('FALSE'=16,'TRUE'=1),labels=c('Observed','Below LOD; L/2'))+
+    ggplot2::geom_label(data=lod,ggplot2::aes(Date,Label_y,label=Label),inherit.aes=FALSE,
+      hjust=0,size=5.5,fontface='bold',linewidth=0,fill='white',label.padding=grid::unit(.10,'lines'))+
     ggplot2::facet_wrap(~Indicator,ncol=2,scales='free_y')+
     ggplot2::scale_x_date(breaks=as.Date(e$Water_quality_date),labels=paste(e$TS,e$Sampling_month,sep='\n'))+
-    ggplot2::labs(x=NULL,y=NULL,shape=NULL,caption='One water-quality record per TS. Below-LOD values use L/2.\nTS8 has no contemporaneous environment record.')+
+    ggplot2::labs(x=NULL,y=NULL,shape=NULL,caption='Dashed lines: NO2-N LOD = 0.002 mg N/L; DIP LOD = 0.002 mg P/L. Open circles: below LOD, shown at L/2.\nOne water-quality record per TS; TS8 has no contemporaneous environment record.')+
     mc19_talk_theme()+ggplot2::theme(axis.text.x=ggplot2::element_text(angle=45,hjust=1,size=17,face='bold'),legend.position='bottom',panel.spacing=grid::unit(1.2,'lines'))
-  mc19_talk_save(p,file.path(out,'NP_by_TS'),18,10.125)
+  mc19_talk_save(p,file.path(out,'NP_by_TS'),20,11.25)
   write.csv(d,file.path(out,'NP_by_TS_data.csv'),row.names=FALSE)
 }
 mc19_talk_3d_widget <- function(d,results,scope,stress,initial='Nitrite_mgN_L') {
@@ -177,8 +183,9 @@ mc19_talk_3d_widget <- function(d,results,scope,stress,initial='Nitrite_mgN_L') 
     list(label=unname(short[fields[i]]),method='update',args=list(list(visible=visible),layout_change))
   })
   plotly::layout(w,font=list(family='Arial Black, Arial, sans-serif',size=20),
-    uirevision='MC19-fixed-coordinates',margin=list(l=25,r=235,b=95,t=140),
+    uirevision='MC19-fixed-coordinates',margin=list(l=25,r=225,b=85,t=130),
     scene=list(aspectmode='data',uirevision='MC19-fixed-camera',
+      camera=list(eye=list(x=1.30,y=1.30,z=1.00),center=list(x=0,y=0,z=0)),
       xaxis=axis_style(1),yaxis=axis_style(2),zaxis=axis_style(3)),
     updatemenus=list(list(type='buttons',direction='down',active=match(initial,fields)-1L,
       x=1.025,y=.98,xanchor='left',yanchor='top',font=list(size=19),buttons=buttons)),
@@ -189,6 +196,34 @@ mc19_talk_3d_widget <- function(d,results,scope,stress,initial='Nitrite_mgN_L') 
         showarrow=FALSE,font=list(size=20)),
       list(text='<b>Color by</b>',x=1.025,y=1.04,xref='paper',yref='paper',xanchor='left',yanchor='bottom',
         showarrow=FALSE,font=list(size=20))))
+}
+mc19_save_widget <- function(widget,path) {
+  dir.create(dirname(path),recursive=TRUE,showWarnings=FALSE)
+  path <- file.path(normalizePath(dirname(path),winslash='/',mustWork=TRUE),basename(path))
+  stage <- tempfile('mc19-html-');dir.create(stage)
+  on.exit({
+    resolved <- normalizePath(stage,winslash='/',mustWork=FALSE)
+    if(startsWith(resolved,paste0(normalizePath(tempdir(),winslash='/'),'/'))) unlink(stage,recursive=TRUE)
+  },add=TRUE)
+  target <- file.path(stage,basename(path))
+  withCallingHandlers(htmlwidgets::saveWidget(widget,target,selfcontained=FALSE,libdir='lib'),
+    warning=function(w) stop('HTML resource export failed: ',conditionMessage(w),call.=FALSE))
+  assets <- list.files(file.path(stage,'lib'),recursive=TRUE,full.names=FALSE)
+  destinations <- file.path(dirname(path),'lib',assets)
+  if(any(nchar(c(path,destinations),type='chars')>245L))
+    stop('HTML output path is too deep for reliable Windows export; choose a shorter output directory.')
+  for(i in seq_along(assets)) {
+    dir.create(dirname(destinations[i]),recursive=TRUE,showWarnings=FALSE)
+    if(!file.copy(file.path(stage,'lib',assets[i]),destinations[i],overwrite=TRUE) ||
+       unname(tools::md5sum(file.path(stage,'lib',assets[i])))!=unname(tools::md5sum(destinations[i]))) stop('HTML dependency copy/verification failed.')
+  }
+  html <- paste(readLines(target,warn=FALSE),collapse='\n')
+  refs <- regmatches(html,gregexpr('(?:src|href)="[^"]+"',html,perl=TRUE))[[1]]
+  refs <- sub('^[^=]+="','',sub('"$','',refs))
+  local <- refs[!grepl('^([a-zA-Z]+:|//|#)',refs)]
+  if(!all(file.exists(file.path(dirname(path),local)))) stop('HTML contains missing local dependencies.')
+  if(!file.copy(target,path,overwrite=TRUE)) stop('Cannot publish verified HTML.')
+  invisible(path)
 }
 mc19_talk_nmds <- function(context,out,dimensions=c(2L,3L),trymax=500L,cache_only=FALSE) {
   stopifnot(requireNamespace('vegan',quietly=TRUE))
@@ -233,7 +268,7 @@ mc19_talk_nmds <- function(context,out,dimensions=c(2L,3L),trymax=500L,cache_onl
       } else {
         stopifnot(requireNamespace('plotly',quietly=TRUE),requireNamespace('htmlwidgets',quietly=TRUE))
         w <- mc19_talk_3d_widget(d,results,analysis_scope,fit$stress,field)
-        htmlwidgets::saveWidget(w,file.path(out,paste0('NMDS3D_',field,'.html')),selfcontained=FALSE)
+        mc19_save_widget(w,file.path(out,paste0('NMDS3D_',field,'.html')))
         for(pair in list(c(1,2),c(1,3),c(2,3))) {
           p <- ggplot2::ggplot(d,ggplot2::aes(x=.data[[paste0('NMDS',pair[1])]],y=.data[[paste0('NMDS',pair[2])]],colour=Env))+
             ggplot2::geom_point(size=2,alpha=.8)+ggplot2::scale_colour_viridis_c()+ggplot2::coord_equal()+
@@ -244,7 +279,7 @@ mc19_talk_nmds <- function(context,out,dimensions=c(2L,3L),trymax=500L,cache_onl
     }
     if(k==3L) {
       combined <- mc19_talk_3d_widget(d,results,analysis_scope,fit$stress)
-      htmlwidgets::saveWidget(combined,file.path(out,'NMDS3D_nutrients.html'),selfcontained=FALSE)
+      mc19_save_widget(combined,file.path(out,'NMDS3D_nutrients.html'))
     }
   }
   if(!cache_only) write.csv(do.call(rbind,diag),file.path(out,'NMDS_diagnostics.csv'),row.names=FALSE)
