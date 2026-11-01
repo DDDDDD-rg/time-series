@@ -44,3 +44,8 @@
 热图＋森林图保持16:9：热图加宽、森林面板收窄，MC编号、英文筛选依据和完整置信区间保留。NMDS静态图（含3D轴对投影及Shepard）、N/P折线、two-part森林图已统一为16:9。原GLMM显著曲线每页最多2个MC，同MC同行同页，Coral共3页、ecosystem共4页；主图完整范围、右侧Zoom保留。
 
 已经清楚的横版two-part曲线/残差和GLMM补充诊断保留原布局。全部仅基于保存结果重画，P/q、预测和NMDS坐标不变，交互3D保持现有版本。覆盖前备份、源码及核对记录见[本次归档](../archive/ppt_landscape_run001/README.md)。
+
+
+## 2026-11-01图形更新
+
+已用本地R从保存模型和缓存优化并覆盖GLMM曲线、two-part森林/曲线、NP和交互3D，并同步MC19_阶段汇报结果图_v01。Two-part森林按det/pos分面，正值曲线显示百分比并在需要时附独立Zoom；原始点和完整CI保留。NO2-N/DIP检出限分别0.002 mg N/L、0.002 mg P/L（原分析L/2=.001），时间折线有水平虚线、环境响应曲线有垂直虚线。3D默认视角放大、固定轴与统计说明及营养盐切换保留，HTML应与旁边lib目录一起传送。既有refresh_MC19_figure_style.R继续读取保存缓存；本次执行和备份见研究根archive/figure_polish_run001/README.md。未重跑分析。

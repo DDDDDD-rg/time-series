@@ -1,3 +1,17 @@
+## 当前状态与工程修复（2026-10-31）
+
+Coral/ecosystem主分析均已运行完成，two-part为8/14组合、16/28分模型。当前主曲线为16:9、每页最多2MC（Coral3页、ecosystem4页），主图full range、右侧独立Zoom。历史段落中的“未运行”、16pt、每页3MC及旧目录示例仅描述当时状态；当前字号及版式以GLMM/README.md最新规则为准。
+
+Two-part作图先执行只读深度校验，核对原始输入、任务键、模型系数、主/明细表、BH及预测/观测缓存；旧批次可直接验证，不修改文件。新拟合批次另写artifact_fingerprints.csv。只改字体不改变分析签名，分析函数改变会阻止混用；旧签名通过保存源码验证后仅在用户明确恢复fit时迁移。
+
+批量样式刷新按kind/scope/source和完成状态定位plot修订及talk缓存，不再硬编码日期；要求预测快照与结果一致、GLMM与PERMANOVA输入一致。HTML先在短暂存目录导出到短lib依赖路径，核对资源后发布；过深路径明确报错，不发布残缺HTML。
+
+本轮只修代码和说明，未拟合、未模拟、未重算NMDS，现有图/结果保留。新图注在下次用户重画时生效：空心点表示营养盐低于LOD、占比分母为总Ruegeria reads，two-part正值为0–1比例。现有图没有覆盖；新增Zoom和字体嵌入不是本轮执行内容。
+
+---
+
+以下为已有说明与历史更新记录。
+
 # MC19：talk图与两部分分析（2026-10-31）
 
 用户已于2026-10-31完成正式两部分与talk运行，现有结果保留。下列为后续操作说明，更新命名规则不要求重新分析。原测试预览在archive/talk_code_QA_20261031。
@@ -93,3 +107,8 @@ source(file.path(project_dir,"scripts/GLMM/GLMM_MC19_two_part.R"),encoding="UTF-
 
 
 热图＋森林图现为16:9（32×18in）横向画布，24pt基准粗体；19MC及热图四指标完整保留。森林图仅保留至少一个MC的保存BH q<0.05的环境整列：coral为NO2/氨氮，ecosystem为NO2/氨氮/DIP；被保留的每列仍显示全部19MC及完整CI。其余森林面板的宽度重新分配；所有入口共用mc19_export_heatmap_forest，当前PDF/PNG已覆盖。
+
+
+## 2026-11-01图形更新
+
+已用本地R从保存模型和缓存优化并覆盖GLMM曲线、two-part森林/曲线、NP和交互3D，并同步MC19_阶段汇报结果图_v01。Two-part森林按det/pos分面，正值曲线显示百分比并在需要时附独立Zoom；原始点和完整CI保留。NO2-N/DIP检出限分别0.002 mg N/L、0.002 mg P/L（原分析L/2=.001），时间折线有水平虚线、环境响应曲线有垂直虚线。3D默认视角放大、固定轴与统计说明及营养盐切换保留，HTML应与旁边lib目录一起传送。既有refresh_MC19_figure_style.R继续读取保存缓存；本次执行和备份见研究根archive/figure_polish_run001/README.md。未重跑分析。
