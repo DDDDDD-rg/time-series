@@ -1,4 +1,4 @@
-# 当前主分析：coral/ecosystem原始独立样本，19个MC，7项当期环境；不做季节或宿主检验。
+# 当前主分析：coral/ecosystem原始独立样本，19个MC，5项当期环境；不做季节或宿主检验。
 # 手动source本文件也会建立独立结果目录；不会读取旧01或按Repeat_group平均。
 project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
 source(file.path(project_dir, "scripts", "PERMANOVA", "permanova_MC19_data_settings.R"), encoding="UTF-8", local=TRUE)
@@ -16,11 +16,11 @@ tryCatch({
   scripts_used <- c("permanova_MC19_data_settings.R", "03_test_season_environment_batch_labels.R",
                     "03_test_season_environment.R", "run_permanova.R", "04_plot_permanova.R",
                     "permanova_MC19_plot_helpers.R", "07_plot_host_highlight_panels.R",
-                    "plot_MC_environment_composition.R", "plot_DO_composition_preview.R", "../mc19_run_io.R")
+                    "plot_MC_environment_composition.R", "plot_DO_composition_preview.R", "../mc19_run_io.R", "../mc19_input.R")
   snapshot_dir <- file.path(support_dir, "scripts_used")
   dir.create(snapshot_dir)
   if (!all(file.copy(file.path(project_dir, "scripts", "PERMANOVA", scripts_used), snapshot_dir))) stop("脚本快照失败。")
-  if (!file.copy(input_file, file.path(support_dir, "00_input_used_MC19_env7.xlsx"))) stop("输入快照失败。")
+  if (!file.copy(input_file, file.path(support_dir, "00_input_used_MC19_TS8_env5.xlsx"))) stop("输入快照失败。")
   writeLines(analysis_version, file.path(support_dir, "00_analysis_version.txt"))
   message(analysis_scope, "原始样本：", nrow(input$community), "；MC：", ncol(input$community),
           "；有效TS：", nrow(input$batches), "。无样本平均，无Host_type调整。")
@@ -39,8 +39,8 @@ tryCatch({
   environment_results$Significance <- ifelse(environment_results$P_BH_raw <= 0.001, "***",
     ifelse(environment_results$P_BH_raw <= 0.01, "**",
       ifelse(environment_results$P_BH_raw <= 0.05, "*", "ns")))
-  environment_results$Adjustment <- paste("BH across seven", analysis_scope, "environment tests")
-  stopifnot(nrow(environment_results)==7L, all(environment_results$Status=="ok"))
+  environment_results$Adjustment <- paste("BH across five", analysis_scope, "environment tests")
+  stopifnot(nrow(environment_results)==5L, all(environment_results$Status=="ok"))
   main_columns <- c("Scope", "Indicator", "Factor", "N_samples", "N_MC", "N_TS",
                     "R2_raw", "F_raw", "P_raw", "P_BH_raw", "Significance")
   write_csv_excel(environment_results[, main_columns, drop=FALSE],
@@ -68,16 +68,16 @@ tryCatch({
   write_csv_excel(data.frame(File=sources, MD5=unname(tools::md5sum(sources))),
                   file.path(support_dir, "00_input_and_script_manifest.csv"))
   writeLines(capture.output(sessionInfo()), file.path(support_dir, "00_session_info.txt"))
-  summary_text <- c(paste("MC19 /", analysis_scope, "/ 7项当期环境"), paste("输入：", input_file),
+  summary_text <- c(paste("MC19 /", analysis_scope, "/ 5项当期环境"), paste("输入：", input_file),
     paste("原始样本：", nrow(input$community), "；有效TS：", nrow(input$batches)),
     "每个样本保留一行；无Repeat_group或任何样本平均；无Host_type模型。",
     "原始Ruegeria比例逐元素平方根后计算Bray–Curtis；19个MC不重新归一化。",
     "每种TS分配的R²、F、平方和与自由度均直接读取vegan::adonis2(permutations=0)。",
     paste("所有环境共用", nrow(orders), "种TS行排列，含原始顺序。"),
-    "p值=所有TS排列中F不小于实际F的比例；7项环境p值统一BH校正。",
+    "p值=所有TS排列中F不小于实际F的比例；5项环境p值统一BH校正。",
     "低于检出限采用输入表中的L/2；保留原始报告值与删失标记。",
     "此置换推断依赖TS环境标签在零假设下可交换；结果解释为探索性关联。",
-    "TS8当期环境缺测，不补值；不运行季节、宿主或两两比较；作图由04读取保存结果。",
+    "完整TS1–TS8；DIN为三项无机氮之和；不运行季节、宿主或两两比较；作图由04读取保存结果。",
     "顶层environment_results.csv为主要结果；完整结果、输入、置换记录、日志和快照均在supporting_files。", "",
     capture.output(print(environment_results[, c("Factor", "N_samples", "N_TS", "R2_raw",
       "F_raw", "P_raw", "P_BH_raw", "Significance")], row.names=FALSE)))

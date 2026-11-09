@@ -1,38 +1,34 @@
 # Current analysis: definitions only. Source after glmm_MC19_pilot_helpers.R.
-# 19 MC x 4 nutrients, TS random intercept only; one BH family of 76.
+# 19 MC x 5 nutrients, TS random intercept only; one BH family of 95.
 
 mc19_wald_config <- function(project_dir, analysis_scope="coral") {
   cfg <- mc19_pilot_config(project_dir)
   stopifnot(length(analysis_scope) == 1L, analysis_scope %in% c("coral", "ecosystem"))
   cfg$analysis_scope <- analysis_scope
-  cfg$expected_samples <- if (analysis_scope == "coral") 98L else NULL
-  cfg$version <- if (analysis_scope == "coral") "MC19_env4_coral_TS_Wald_v2" else
-    "MC19_env4_ecosystem_TS_Wald_v1"
+  cfg$expected_samples <- NULL
+  cfg$version <- paste0("MC19_env5_TS8_", analysis_scope, "_Wald_v1")
   cfg$mc_ids <- cfg$all_mc_ids
   cfg$environments <- cfg$nutrient_fields
   cfg$model_ids <- "BB_TS"
   cfg$short_names <- c(Nitrate_mgN_L = "NO3", Nitrite_mgN_L = "NO2",
-    Ammonia_mgN_L = "NH4", DIP_mgP_L = "DIP")
+    Ammonia_mgN_L = "NH4", DIN_mgN_L = "DIN", DIP_mgP_L = "DIP")
   cfg$axis_labels <- c(Nitrate_mgN_L = "Nitrate (mg N/L)",
     Nitrite_mgN_L = "Nitrite (mg N/L)", Ammonia_mgN_L = "Ammonia (mg N/L)",
-    DIP_mgP_L = "DIP (mg P/L)")
-  cfg$n_models <- cfg$q_family_size <- 76L
-  cfg$reuse_pilot <- analysis_scope == "coral"
-  cfg$pilot_source <- file.path(cfg$results_root, "GLMM_MC19_nitrate_pilot_20261027_120255")
-  cfg$latest_file <- file.path(cfg$results_root, paste0("00_latest_GLMM_MC19_env4_TS_Wald_", analysis_scope, ".txt"))
-  cfg$legacy_latest_file <- if (analysis_scope == "coral")
-    file.path(cfg$results_root, "00_latest_GLMM_MC19_env4_TS_Wald.txt") else ""
+    DIN_mgN_L = "DIN (mg N/L)", DIP_mgP_L = "DIP (mg P/L)")
+  cfg$n_models <- cfg$q_family_size <- 95L
   cfg$scripts <- c("GLMM.R", "GLMM_reads_diagnostics_full.R", "plot_GLMM_MC19.R",
-    "glmm_MC19_wald_helpers.R", "glmm_MC19_wald_plot_helpers.R", "glmm_MC19_pilot_helpers.R", "../mc19_run_io.R")
+    "glmm_MC19_wald_helpers.R", "glmm_MC19_wald_plot_helpers.R", "glmm_MC19_pilot_helpers.R", "../mc19_run_io.R", "../mc19_input.R")
   cfg
 }
 
 mc19_wald_key <- function(mc, environment, model) paste(mc, environment, model, sep = "__")
 
 mc19_wald_load_input <- function(cfg) {
-  # The established reader verifies IDs, four nutrient fields, censoring/L/2,
+  # The established reader verifies IDs, five nutrient fields, censoring/L/2,
   # all 19 proportions and the denominator from ALL MC rows in the raw table.
   reader_cfg <- mc19_pilot_config(cfg$project_dir)
+  reader_cfg$workbook <- cfg$workbook
+  reader_cfg$counts_file <- cfg$counts_file
   reader_cfg$analysis_scope <- cfg$analysis_scope
   reader_cfg$expected_samples <- cfg$expected_samples
   reader_cfg$complete_fields <- cfg$environments
@@ -52,7 +48,7 @@ mc19_wald_load_input <- function(cfg) {
   for (environment in cfg$environments) {
     values <- environment_TS[[environment]]
     if (any(!is.finite(values)) || any(values < 0) || length(values) != nlevels(template$TS) ||
-        any(!is.finite(template[[environment]]))) stop("四项营养盐必须完整覆盖同一批原始样本：", environment)
+        any(!is.finite(template[[environment]]))) stop("五项营养盐必须完整覆盖同一批原始样本：", environment)
     center <- mean(values)
     scale <- stats::sd(values)
     if (!is.finite(scale) || scale <= 0) stop("营养盐无可估计变化：", environment)
@@ -75,43 +71,11 @@ mc19_wald_load_input <- function(cfg) {
         median_proportion = stats::median(d$MC_proportion), max_proportion = max(d$MC_proportion))
     }
   }
-  if (length(blocks) != 76L || !identical(mc19_hash(verified$fingerprints$path)$md5,
+  if (length(blocks) != 95L || !identical(mc19_hash(verified$fingerprints$path)$md5,
       verified$fingerprints$md5)) stop("任务数或读取中的输入指纹变化。")
   list(blocks = blocks, scaling = do.call(rbind, scaling), environment_TS = environment_TS,
     audit = do.call(rbind, audit), coverage = verified$coverage, inclusion = verified$exclusion,
     fingerprints = verified$fingerprints, all_MC_count = verified$all_MC_count)
-}
-
-mc19_wald_pilot_cache <- function(cfg, input) {
-  if (cfg$analysis_scope != "coral" || !isTRUE(cfg$reuse_pilot)) return(list(entries = list(), fingerprints = NULL))
-  source <- mc19_read_run(mc19_pilot_config(cfg$project_dir), cfg$pilot_source)
-  selected <- source$manifest$model_files[grepl("__BB_TS$", names(source$manifest$model_files))]
-  paths <- c(unname(selected), file.path(source$run_dir, "00_result.csv"),
-    file.path(source$support, "run_manifest.rds"))
-  fingerprints <- mc19_hash(paths)
-  entries <- list()
-  for (path in selected) {
-    entry <- readRDS(path)
-    key <- mc19_wald_key(entry$MC_ID, "Nitrate_mgN_L", entry$model)
-    d <- input$blocks[[paste(entry$MC_ID, "Nitrate_mgN_L", sep = "__")]]
-    if (!identical(entry$model, "BB_TS") || is.null(d) ||
-        !identical(entry$version, source$manifest$version) ||
-        !isTRUE(entry$result$numerical_ok) || is.null(entry$fit) ||
-        !identical(as.character(entry$data$New_ID), as.character(d$New_ID)) ||
-        !identical(as.character(entry$data$TS), as.character(d$TS))) stop("历史模型样本或版本不匹配：", key)
-    for (field in c("MC_reads", "Other_reads", "Ruegeria_reads_total", "E_raw", "E_z"))
-      if (!mc19_same(entry$data[[field]], d[[field]])) stop("历史模型不能复用，数据发生变化：", key, "/", field)
-    if (!identical(stats::family(entry$fit)$family, "betabinomial") ||
-        !identical(stats::family(entry$fit)$link, "logit")) stop("历史模型分布不一致。")
-    expected_formula <- "cbind(MC_reads,Other_reads)~E_z+(1|TS)"
-    actual_formula <- gsub("[[:space:]]", "", paste(deparse(stats::formula(entry$fit)), collapse = ""))
-    if (!identical(actual_formula, expected_formula)) stop("历史均值公式不是约定的简单结构：", key)
-    entry$data <- d
-    entry$source_model_file <- normalizePath(path, winslash = "/", mustWork = TRUE)
-    entries[[key]] <- entry
-  }
-  if (length(entries) != 4L || !identical(mc19_hash(paths)$md5, fingerprints$md5)) stop("复用4个TS模型的来源变化。")
-  list(entries = entries, fingerprints = fingerprints)
 }
 
 mc19_wald_fit_one <- function(mc, d, cfg) {
@@ -200,12 +164,10 @@ mc19_wald_write_result <- function(results, run_dir) {
 }
 
 mc19_wald_run <- function(cfg) {
-  if (!identical(cfg$model_ids, "BB_TS") || cfg$n_models != 76L || cfg$q_family_size != 76L)
-    stop("当前流程仅允许19MC x 4营养盐的76个TS随机截距模型。")
+  if (!identical(cfg$model_ids, "BB_TS") || cfg$n_models != 95L || cfg$q_family_size != 95L)
+    stop("当前流程仅允许19MC x 5营养盐的95个TS随机截距模型。")
   mc19_require(c("readxl", "glmmTMB"))
   input <- mc19_wald_load_input(cfg)
-  if (cfg$analysis_scope != "coral") cfg$reuse_pilot <- FALSE
-  cache <- mc19_wald_pilot_cache(cfg, input)
   scripts <- file.path(cfg$project_dir, "scripts", "GLMM", cfg$scripts)
   script_hashes <- mc19_hash(scripts)
   run_dir <- mc19_new_run(cfg$project_dir, "GLMM", cfg$analysis_scope, cfg$version, cfg$workbook,
@@ -221,42 +183,38 @@ mc19_wald_run <- function(cfg) {
     mc19_write_csv(input[[name]], file.path(support, paste0("input_", name, ".csv")))
   mc19_write_csv(do.call(rbind, input$blocks), file.path(support, "analysis_input.csv"))
   mc19_write_csv(script_hashes, file.path(support, "script_fingerprints.csv"))
-  if (!is.null(cache$fingerprints)) mc19_write_csv(cache$fingerprints, file.path(support, "reused_source_fingerprints.csv"))
   manifest <- list(version = cfg$version, cfg = cfg, run_dir = run_dir,
     analysis_scope = cfg$analysis_scope, n_samples = input$scaling$n_samples[1], n_TS = input$scaling$n_TS[1],
     scaling = input$scaling, model_files = character(), fit_complete = FALSE,
     expected_models = cfg$n_models, q_family_size = cfg$q_family_size, input_hashes = input$fingerprints,
-    reused_hashes = cache$fingerprints, new_fit_count = 0L, reused_fit_count = 0L,
+    new_fit_count = 0L,
     bootstrap = FALSE, permutations = FALSE, LOTO = FALSE)
   saveRDS(manifest, file.path(support, "wald_manifest.rds"))
-  mc19_write_text(c("19MC x 4营养盐，仅TS随机截距模型，共76项Wald beta检验，单一BH族n=76。",
+  mc19_write_text(c("19MC x 5营养盐，仅TS随机截距模型，共95项Wald beta检验，单一BH族n=95。",
     sprintf("%s：%d个原始样本，%d个TS；不平均，无Host/Repeat/SST项。", cfg$analysis_scope, manifest$n_samples, manifest$n_TS),
     "响应为MC reads和其它Ruegeria reads，分母加总原表全部MC，不对19MC重新归一化。",
     "公式固定为cbind(MC_reads, Other_reads) ~ E_z + (1 | TS)；Beta-binomial/logit，dispformula=~1，ziformula=~0。",
-    "每次单一营养盐，按7TS等权中心/SD标准化。",
+    "每次单一营养盐，按8TS等权中心/SD标准化。",
     "beta_P_value直接取summary(fit)$coefficients$cond[E_z, Pr(>|z|)]。不运行bootstrap、标签置换或LOTO。",
-    "Wald P/CI是渐近近似；环境信息来自7TS。高硝酸盐信息集中于TS4、TS6。",
-    "beta_q_value对全部76项统一BH，无法可靠估计项留NA但保持n=76，不按显著性选择MC。",
+    "Wald P/CI是渐近近似；环境信息来自8TS。",
+    "beta_q_value对全部95项统一BH，无法可靠估计项留NA但保持n=95，不按显著性选择MC。",
     "数值问题、分布诊断标记分开；少数极端值或LOTO翻转不自动淘汰完整模型。",
-    "保留原始报告值及L/2删失规则：NO2有4/7、DIP有3/7低检出限，详见input_environment_TS.csv。",
-    if (cfg$reuse_pilot) "Coral核对复用4个先导，新增72个。" else "本范围全部76模型重新拟合；ecosystem不复用coral。",
+    "保留原始报告值及L/2规则；DIN为三项无机氮处理后的和，其删失标记表示包含L/2成分。",
+    "本范围全部95模型以完整8TS数据重新拟合。",
     "TS-only范围为查看172226两结构结果后由用户确定的后续方案；历史152项P/q及输出保持原样。",
     "默认另做已保存模型的2000次模拟诊断，不重新拟合；诊断P不作为beta关联P。",
     "00_result.csv为主要结果；完整字段、模型、输入、诊断、源码和状态在supporting_files。"),
     file.path(run_dir, "00_readme.txt"))
-  mc19_write_text("fitting_76_TS_models", file.path(support, "run_status.txt"))
+  mc19_write_text("fitting_95_TS_models", file.path(support, "run_status.txt"))
   rows <- list()
   for (environment in cfg$environments) for (mc in cfg$mc_ids) for (model in cfg$model_ids) {
     key <- mc19_wald_key(mc, environment, model)
     d <- input$blocks[[paste(mc, environment, sep = "__")]]
     scale_row <- input$scaling[input$scaling$environment == environment, , drop = FALSE]
-    entry <- cache$entries[[key]]
-    origin <- if (is.null(entry)) "new_fit" else "reused_pilot_fit"
-    cat("模型 ", length(rows) + 1L, "/76：", key, " [", origin, "]\n", sep = ""); flush.console()
-    if (is.null(entry)) {
-      entry <- mc19_wald_fit_one(mc, d, cfg)
-      manifest$new_fit_count <- manifest$new_fit_count + 1L
-    } else manifest$reused_fit_count <- manifest$reused_fit_count + 1L
+    origin <- "new_fit"
+    cat("模型 ", length(rows) + 1L, "/95：", key, "\n", sep = ""); flush.console()
+    entry <- mc19_wald_fit_one(mc, d, cfg)
+    manifest$new_fit_count <- manifest$new_fit_count + 1L
     entry <- mc19_wald_annotate(entry, environment, scale_row, origin, cfg)
     path <- file.path(support, "models", paste0(key, ".rds"))
     saveRDS(entry, path); manifest$model_files[key] <- path
@@ -266,23 +224,20 @@ mc19_wald_run <- function(cfg) {
     saveRDS(manifest, file.path(support, "wald_manifest.rds"))
   }
   if (nrow(results) != cfg$n_models || !identical(mc19_hash(input$fingerprints$path)$md5, input$fingerprints$md5) ||
-      !identical(mc19_hash(scripts)$md5, script_hashes$md5) ||
-      (!is.null(cache$fingerprints) && !identical(mc19_hash(cache$fingerprints$path)$md5, cache$fingerprints$md5)))
+      !identical(mc19_hash(scripts)$md5, script_hashes$md5))
     stop("任务数、输入、历史模型或源码变化，本批不发布latest。")
   valid <- is.finite(results$beta_P_value) & results$numerical_ok %in% TRUE
   results$beta_q_value[valid] <- stats::p.adjust(results$beta_P_value[valid], method = "BH", n = cfg$q_family_size)
   results$q_value <- results$beta_q_value
   mc19_wald_write_result(results, run_dir)
-  expected_reused <- if (isTRUE(cfg$reuse_pilot)) 4L else 0L
-  if (manifest$reused_fit_count != expected_reused ||
-      manifest$new_fit_count != cfg$n_models - expected_reused) stop("新拟合/复用数量不一致。")
+  if (manifest$new_fit_count != cfg$n_models) stop("新拟合数量不一致。")
   manifest$model_hashes <- mc19_hash(unname(manifest$model_files))
   mc19_write_csv(manifest$model_hashes, file.path(support, "model_fingerprints.csv"))
   manifest$fit_complete <- TRUE; manifest$finished_at <- format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")
   saveRDS(manifest, file.path(support, "wald_manifest.rds"))
   mc19_write_text("Wald_fits_complete_diagnostics_pending", file.path(support, "run_status.txt"))
   mc19_publish_result(cfg$project_dir, "GLMM", cfg$analysis_scope, run_dir)
-  mc19_write_text(c("# Latest GLMM", "", "当前：MC19 x 4 nutrients，TS随机截距；Wald P/BH n=76。", "",
+  mc19_write_text(c("# Latest GLMM", "", "当前：MC19 x 5 nutrients，TS随机截距；Wald P/BH n=95。", "",
     paste0("- [主结果](", basename(run_dir), "/00_result.csv)"),
     paste0("- [完整配套](", basename(run_dir), "/supporting_files/)"), "",
     paste(cfg$analysis_scope, "原始独立样本；无Host/Repeat/SST，不平均，不bootstrap。"),
@@ -302,7 +257,8 @@ mc19_wald_read_run <- function(cfg, run_dir = "") {
   saved_scope <- if (is.null(manifest$analysis_scope)) "coral" else manifest$analysis_scope
   if (!identical(saved_scope, cfg$analysis_scope)) stop("保存结果与所选分析范围不同。")
   expected_n <- if (!is.null(cfg$expected_samples)) cfg$expected_samples else manifest$n_samples
-  expected_ts <- if (!is.null(manifest$n_TS)) manifest$n_TS else cfg$expected_TS
+  expected_ts <- cfg$expected_TS
+  if (!identical(as.integer(manifest$n_TS), expected_ts)) stop("当前结果必须来自完整8TS。")
   if (length(expected_n) != 1L || !is.finite(expected_n) || expected_n < 3L) stop("缺少样本数记录。")
   if (is.null(results$analysis_scope)) results$analysis_scope <- saved_scope
   if (anyNA(results$analysis_scope) || any(results$analysis_scope != saved_scope)) stop("结果范围字段不符。")
@@ -314,7 +270,7 @@ mc19_wald_read_run <- function(cfg, run_dir = "") {
       length(manifest$model_files) != cfg$n_models || nrow(results) != cfg$n_models || anyDuplicated(keys) ||
       !setequal(keys, expected) || !setequal(names(manifest$model_files), expected) ||
       any(results$n_samples != expected_n | results$n_TS != expected_ts | results$q_family_size != cfg$q_family_size))
-    stop("不是完整的当前76模型TS-only Wald批次。")
+    stop("不是完整的当前95模型TS-only Wald批次。")
   primary_keys <- mc19_wald_key(primary$MC_ID, primary$environment, primary$model)
   if (nrow(primary) != cfg$n_models || anyDuplicated(primary_keys) || !setequal(primary_keys, keys))
     stop("主表与完整明细的模型键不一致。")
@@ -347,7 +303,7 @@ mc19_wald_diagnostics <- function(cfg, run_dir = "") {
       dispersion_p_diagnostic = NA_real_, zero_inflation_p_diagnostic = NA_real_,
       summary_flags = NA_integer_, n_sim = cfg$n_sim, seed = cfg$seed + i, warnings = "", error = "")
     if (isTRUE(r$numerical_ok) && !is.null(entry$fit)) {
-      cat("诊断 ", i, "/76：", key, "（只模拟，不重新拟合）\n", sep = ""); flush.console()
+      cat("诊断 ", i, "/95：", key, "（只模拟，不重新拟合）\n", sep = ""); flush.console()
       attempt <- mc19_capture(function() mc19_diagnostic_one(entry, cfg, cfg$seed + i))
       row$warnings <- paste(attempt$warnings, collapse = " | "); row$error <- attempt$error
       if (!nzchar(attempt$error)) {

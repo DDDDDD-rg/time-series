@@ -1,4 +1,4 @@
-# User-run entry. Default check is read-only. Choose stage="fit" explicitly for 44 formal fits.
+# User-run entry. Default check is read-only. Choose stage="fit" explicitly for the component fits selected from the new 8-TS GLMM.
 # options(mc19.analysis_scope="coral", mc19.two_part.stage="check")
 # For resumption or replot, set mc19.two_part.run_dir to the existing run directory.
 local({
@@ -18,7 +18,7 @@ local({
     print(input$selected[c('MC_ID','environment','beta_q_value')],row.names=FALSE)
     message('Scope: ',scope,'; selected pairs: ',nrow(input$selected),'; component tasks: ',2*nrow(input$selected))
     if(stage=='fit') {
-      if(!nzchar(out)) out <- e$mc19_new_run(project_dir,'two_part',scope,'MC19_two_part_v1',input$source,
+      if(!nzchar(out)) out <- e$mc19_new_run(project_dir,'two_part',scope,'MC19_two_part_TS8_env5_v1',input$source,
         requested=getOption('mc19.run_id',NULL))
       if(out=='latest') stop('For resumption supply an explicit run directory; latest is for plot only.')
       e$mc19_tp_run(input,project_dir,out)

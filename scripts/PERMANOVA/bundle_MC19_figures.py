@@ -9,7 +9,7 @@ import tempfile
 
 from pypdf import PdfReader, PdfWriter
 
-ENVIRONMENT = ("Salinity_psu", "SST_C", "pH", "Nitrate_mgN_L", "Nitrite_mgN_L", "Ammonia_mgN_L", "DIP_mgP_L")
+ENVIRONMENT = ("Nitrate_mgN_L", "Nitrite_mgN_L", "Ammonia_mgN_L", "DIN_mgN_L", "DIP_mgP_L")
 GROUPS = {
     "00_1_总体结果与NMDS.pdf": ["environment_R2_BH", "NMDS_TS", *["NMDS_environment_" + e for e in ENVIRONMENT], "host_highlight_descriptive"],
     "00_2_环境与MC时间变化.pdf": ["environment_time_series", "MC_individual_samples_by_TS", "MC_sample_abundance_heatmap"],

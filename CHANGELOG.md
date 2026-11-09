@@ -1,5 +1,9 @@
 # 时间序列研究更新日志
 
+## 2026-11-09 · 8TS准备源码与后续计划
+
+发布8TS五营养盐读取与验证、运行读取/作图适配源码和-5至-6交接。现有正式结果仍是7TS；TS8水样日期和四项营养盐待补。温度、TS4/5分段展示及联合环境贡献比较仅为记录的后续方向，本次未运行分析。
+
 ## 2026-11-02 · 知识与发布维护
 
 - 更新当前知识入口、恢复三份并发旧稿的双方版本，补充诊断/覆盖/7TS方法依据；脚本与文档发布、结果图表本地保留的约定和检查工具已落地。详见[根更新日志](../../CHANGELOG.md)。
@@ -127,3 +131,24 @@
 - Git提交限于PERMANOVA脚本、导航、更新日志、当前主结果CSV及三份合并PDF。原始Excel、完整RDS、置换缓存、单图与历史输出保持本地。GLMM的计划、文献和未执行内容不纳入本次提交。
 
 当前入口：[结果导航](results/00_LATEST_PERMANOVA.md)、[合并图导航](figures/00_LATEST_PERMANOVA.md)、[脚本说明](scripts/README.md)。
+
+
+## 2026-11-05 · 目录整理v1
+
+- 新建00_最新结果，集中当前表、图、PPT及最新审查入口；旧结果／小测／图件／旧汇报归入archive/history_v1，旧目录保留隐藏兼容联接。
+- 按Time series-5与GLMM-Lasso-5及本地保存文件核对执行状态：time已完成仍为7TS；LASSO14条v1按求解器审查待修订，glmnet未全量重跑。
+- 完整移动清单与逐文件SHA-256验证见项目根Codex_Workspace/organize_time_lasso_v1；未运行分析或Git提交推送。
+
+
+### 同日目录展示修订
+
+按用户要求删除00_最新结果聚合目录及其中的快捷方式，当前文件保留原位，不额外突出。旧结果集中归档保持；项目说明改回直接指向原results、figures和presentations文件。原文件校验一致。
+
+
+### Same-day folder names
+
+- Result, figure and archive folders now use short English names; no new Chinese directory names or timestamp suffixes. Naming map: Research_Knowledge/questions/Folder_names_v1.md.
+- Updated plot/annotation callers, saved-result pointers and Markdown references. Kept statistical IDs, frozen caches and source fingerprints unchanged.
+- Validation: 69 R sources parsed; Python syntax checked; six saved time-series tables, 2777 LASSO rows and formal input/core fingerprints verified. No model or plot rerun.
+
+发布验证（2026-11-09）：82个R源码语法通过；Python源码语法及4个MJS语法通过；8TS输入/DIN/缺失日期保护和run编号/范围/完成状态回归通过；无正式研究拟合、置换或绘图。

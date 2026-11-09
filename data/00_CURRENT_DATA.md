@@ -1,24 +1,20 @@
 # 当前输入与数据来源
 
-更新：2026-10-28。当前GLMM与PERMANOVA共用MC19工作簿；原始输入内容未修改。
+更新：2026-11-02。当前GLMM、PERMANOVA及后续图统一使用8TS、19MC、五项营养盐。
 
 | 文件/目录 | 用途 |
 |---|---|
-| [PERMANOVA_input_MC19_env7_20261026.xlsx](PERMANOVA_input_MC19_env7_20261026.xlsx) | 当前样本元数据、19MC比例与TS环境；Community/Metadata/Environment_TS/ReadMe四表 |
-| [mc/MC_abundance_absolute.tsv](mc/MC_abundance_absolute.tsv) | GLMM原始MC计数；分母为全部Ruegeria MC reads |
-| [mc/](mc/) | 原始MC绝对和相对丰度表 |
-| [Environment_noDO_Nsplit_20261026.xlsx](Environment_noDO_Nsplit_20261026.xlsx)、[TS_environment_noDO_Nsplit_20261026.csv](TS_environment_noDO_Nsplit_20261026.csv) | 当期/历史环境整理，7项分析指标及DIN参考 |
-| [source_tables/](source_tables/) | 原始DNA、样本元数据、指示种/网络等来源 |
-| [asv/](asv/) | 原始ASV资料 |
-| [water_quality/](water_quality/) | PM11水质CSV和营养盐制图资料 |
-| [Cooccurence.xlsx](Cooccurence.xlsx) | 原网络资料工作簿，保留 |
+| [MC19_TS8_env5.xlsx](MC19_TS8_env5.xlsx) | 当前共用输入；Community、Metadata、Environment_TS、ReadMe四表 |
+| [mc/MC_abundance_absolute.tsv](mc/MC_abundance_absolute.tsv) | 原始MC计数；分母加总全部Ruegeria MC含Unassigned |
+| [water_quality/](water_quality/) | EPD PM11水质原始资料 |
+| [source_tables/](source_tables/) | 原始样本元数据、DNA与网络等资料 |
+| [PERMANOVA_input_MC19_env7_20261026.xlsx](PERMANOVA_input_MC19_env7_20261026.xlsx) | 原输入保留为历史记录，当前程序不再读取 |
+| [Environment_noDO_Nsplit_20261026.xlsx](Environment_noDO_Nsplit_20261026.xlsx)、[TS_environment_noDO_Nsplit_20261026.csv](TS_environment_noDO_Nsplit_20261026.csv) | 原环境整理及历史参考，保持不变 |
 
-当前有效环境覆盖TS1–TS7；coral逐样本分析共98个样本。GLMM用4种营养盐，PERMANOVA用7项环境；具体筛选、标准化和检测限L/2规则见[运行说明](../scripts/README.md)。
+TS8 MC和宿主元数据已保留：coral共116个样本（TS8为18），ecosystem共356个（TS8为46）。TS8环境对应2026-02，待填。
 
-## 历史输入与归类
+填写Environment_TS第9行：C9为实际水样日期，E9:H9为NO3-N、NO2-N、Ammonia-N、DIP原始报告值。DIN自动由三项无机氮相加；低于报告限的成分先取L/2。未齐全时8TS程序停止，不排除TS8后运行。
 
-- [GLMM_input_MC8_20261011.xlsx](GLMM_input_MC8_20261011.xlsx)、[PERMANOVA_input_MC8_20261011.xlsx](PERMANOVA_input_MC8_20261011.xlsx)为历史MC8输入。保留原位置，供历史源码读取。
-- [archive/](archive/)存放更早MC11输入及备份。
-- `20260928.pptx`属于汇报文件，已移到[presentations/20260928.pptx](../presentations/20260928.pptx)。
+PM11表层按生物样本采样月匹配，原始报告值与删失标记保留。未使用DO、Chl-a；盐度、水温、pH历史字段仅追溯，不进入五指标模型。
 
-旧版输入导航保存在[本次文档备份](../archive/organization_project_20261028_214616/documentation_before/data/00_CURRENT_DATA.md)。
+现有7TS结果表和图保留，本次未重新运行分析。完整入口见[运行说明](../scripts/README.md)。历史MC8、Cooccurence.xlsx和其他原数据保持原位。

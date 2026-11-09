@@ -1,4 +1,4 @@
-方法记录。当前MC8结果：[总览](../results/PERMANOVA_MC8_20261014_183535/00_PERMANOVA_summary.html)。旧MC11结果见[历史归档](../archive/PERMANOVA/results/PERMANOVA_MC11_history/)。
+方法记录。当前MC8结果：[总览](../results/PERMANOVA_MC8_20261014_183535/00_PERMANOVA_summary.html)。旧MC11结果见[历史归档](../archive/old_permanova/results/PERMANOVA_MC11_history)。
 当前分析范围与流程见[新版PERMANOVA说明](README_permanova_readable.md)。下文保留已有方法记录。
 
 # 季节和环境分析：保留Repeat_group，不做第二次平均

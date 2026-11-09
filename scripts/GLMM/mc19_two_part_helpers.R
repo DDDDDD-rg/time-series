@@ -4,18 +4,19 @@ mc19_tp_input <- function(project_dir,scope,source_dir='') {
   for(f in c('glmm_MC19_pilot_helpers.R','glmm_MC19_wald_helpers.R')) sys.source(file.path(project_dir,'scripts','GLMM',f),e)
   run <- e$mc19_wald_read_run(e$mc19_wald_config(project_dir,scope),source_dir)
   s <- run$results; s <- s[s$numerical_ok %in% TRUE & is.finite(s$beta_q_value) & s$beta_q_value<.05,]
-  s$key <- paste(s$MC_ID,s$environment,sep='__');stopifnot(nrow(s)>0,!anyDuplicated(s$key))
+  if(!nrow(s)) stop('新的8TS原GLMM没有BH q<0.05组合，无需运行two-part。',call.=FALSE)
+  s$key <- paste(s$MC_ID,s$environment,sep='__');stopifnot(!anyDuplicated(s$key))
   path <- file.path(run$support,'analysis_input.csv');d <- read.csv(path,stringsAsFactors=FALSE)
   d$key <- paste(d$MC_ID,d$environment,sep='__');d <- d[d$key %in% s$key,]
   stopifnot(!anyDuplicated(d[c('New_ID','MC_ID','environment')]),all(is.finite(d$E_z)),
     all(d$MC_reads>=0),all(d$MC_reads<=d$Ruegeria_reads_total),all(d$Ruegeria_reads_total>0),
     all(abs(d$MC_proportion-d$MC_reads/d$Ruegeria_reads_total)<1e-10))
   stopifnot(all(d$MC_proportion[d$MC_reads>0]>0 & d$MC_proportion[d$MC_reads>0]<1))
-  stopifnot(all(table(d$key)==unique(s$n_samples)),length(unique(d$TS))==7)
+  stopifnot(all(table(d$key)==unique(s$n_samples)),length(unique(d$TS))==8)
   if(scope=='coral') stopifnot(all(tolower(d$Host_niche)=='coral')) else
     stopifnot(!any(tolower(d$Host_niche) %in% c('env','seawater','sediment')))
   for(k in s$key) {
-    z <- d[d$key==k,];u <- unique(z[c('TS','E_raw','E_z')]);stopifnot(nrow(u)==7,!anyDuplicated(u$TS))
+    z <- d[d$key==k,];u <- unique(z[c('TS','E_raw','E_z')]);stopifnot(nrow(u)==8,!anyDuplicated(u$TS))
   }
   fingerprints <- tools::md5sum(c(path,file.path(run$support,'all_results.csv')))
   list(selected=s,data=d,source=run$run_dir,fingerprints=fingerprints,scope=scope)
@@ -72,7 +73,7 @@ mc19_tp_forest_labels <- function(tab) {
   }
   rows$symbol <- paste0(ifelse(rows$detection_significant,'*',''),
     ifelse(rows$positive_significant,'#',''))
-  labels <- c(Nitrate_mgN_L='NO3-N',Nitrite_mgN_L='NO2-N',Ammonia_mgN_L='Ammonia-N',DIP_mgP_L='DIP')
+  labels <- c(Nitrate_mgN_L='NO3-N',Nitrite_mgN_L='NO2-N',Ammonia_mgN_L='Ammonia-N',DIN_mgN_L='DIN',DIP_mgP_L='DIP')
   env <- unname(labels[rows$environment]);env[is.na(env)] <- rows$environment[is.na(env)]
   rows$label <- paste0(rows$MC_ID,ifelse(nzchar(rows$symbol),paste0(' ',rows$symbol),''),' / ',env)
   # Keep the focal MCs together at the top; include only rows actually analysed.
@@ -112,7 +113,7 @@ mc19_tp_curve_page <- function(tab,pred,obs,key) {
   field <- unique(rows$environment);mc <- unique(rows$MC_ID)
   stopifnot(length(field)==1L,length(mc)==1L)
   axis_label <- unname(c(Nitrate_mgN_L='Nitrate-N (mg N/L)',Nitrite_mgN_L='Nitrite-N (mg N/L)',
-    Ammonia_mgN_L='Ammonia-N (mg N/L)',DIP_mgP_L='DIP (mg P/L)')[field])
+    Ammonia_mgN_L='Ammonia-N (mg N/L)',DIN_mgN_L='DIN (mg N/L)',DIP_mgP_L='DIP (mg P/L)')[field])
   # A common full/zoom range for the same MC across its nutrient pages.
   mc_keys <- tab$key[tab$MC_ID==mc]
   op <- obs[obs$key %in% mc_keys & obs$component=='positive',]

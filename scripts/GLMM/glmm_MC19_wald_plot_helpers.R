@@ -74,7 +74,7 @@ mc19_main_heatmap <- function(results, cfg) {
     formatC(ticks, format = "f", digits = 2), adj = 0, cex = .8)
   graphics::text(.9125, .75, "Beta", cex = .92)
   graphics::text(.9125, .727, "per nutrient SD", cex = .65)
-  graphics::text(.5, .025, "* BH q < 0.05 (76 tests)", cex = .8)
+  graphics::text(.5, .025, "* BH q < 0.05 (95 tests)", cex = .8)
 }
 
 # One panel per significant MC x nutrient combination, ordered by the analysis plan.
@@ -202,7 +202,7 @@ mc19_main_curves <- function(results, entries, grids, cfg, environment_table, pa
     }
   }
   if (nrow(panels)) {
-    graphics::text(.5,1.02/height,"Line: b_TS = 0; band: 95% CI; open points: nutrient below LOD (L/2).",cex=.82)
+    graphics::text(.5,1.02/height,"Line: b_TS = 0; band: 95% CI; open points: nutrient or a DIN component below RL (L/2).",cex=.82)
     graphics::text(.5,.74/height,"Main panels: full range; right-hand panels: y-axis zoom (same x-axis).",cex=.82)
     graphics::text(.5,.46/height,"Dashed lines: NO2-N LOD = 0.002 mg N/L; DIP LOD = 0.002 mg P/L.",cex=.82)
   }

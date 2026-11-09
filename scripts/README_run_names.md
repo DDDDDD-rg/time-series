@@ -1,84 +1,19 @@
-## 当前状态与工程修复（2026-10-31）
+# MC19输出命名与读取
 
-Coral/ecosystem主分析均已运行完成，two-part为8/14组合、16/28分模型。当前主曲线为16:9、每页最多2MC（Coral3页、ecosystem4页），主图full range、右侧独立Zoom。历史段落中的“未运行”、16pt、每页3MC及旧目录示例仅描述当时状态；当前字号及版式以GLMM/README.md最新规则为准。
+更新：2026-11-02。结果仍用递增run编号，只重画用递增plot编号；目录名不追加时间。当前分析仅8TS、五营养盐，方法版本另存manifest。
 
-Two-part作图先执行只读深度校验，核对原始输入、任务键、模型系数、主/明细表、BH及预测/观测缓存；旧批次可直接验证，不修改文件。新拟合批次另写artifact_fingerprints.csv。只改字体不改变分析签名，分析函数改变会阻止混用；旧签名通过保存源码验证后仅在用户明确恢复fit时迁移。
-
-批量样式刷新按kind/scope/source和完成状态定位plot修订及talk缓存，不再硬编码日期；要求预测快照与结果一致、GLMM与PERMANOVA输入一致。HTML先在短暂存目录导出到短lib依赖路径，核对资源后发布；过深路径明确报错，不发布残缺HTML。
-
-本轮只修代码和说明，未拟合、未模拟、未重算NMDS，现有图/结果保留。新图注在下次用户重画时生效：空心点表示营养盐低于LOD、占比分母为总Ruegeria reads，two-part正值为0–1比例。现有图没有覆盖；新增Zoom和字体嵌入不是本轮执行内容。
-
----
-
-以下为已有说明与历史更新记录。
-
-# MC19运行编号与最新结果
-
-当前GLMM、PERMANOVA、两部分分析和talk作图共用`mc19_run_io.R`。现有时间戳目录及其中的模型、P/q、图和快照保留原样。历史MC8、先导、LOTO和bootstrap独立入口保留原有规则。
-
-## 输出目录
-
-| 内容 | 新目录示例 |
+| 内容 | 示例 |
 |---|---|
-| 原GLMM结果 | `results/MC19_GLMM_coral_run001/` |
-| PERMANOVA结果 | `results/MC19_PERMANOVA_ecosystem_run001/` |
-| 两部分结果 | `results/MC19_two_part_coral_run001/` |
-| talk图 | `figures/MC19_talk_coral_run001/` |
-| 同批结果的第1版配套图 | `figures/MC19_GLMM_coral_run001_plot001/` |
-| 同批结果的第2版配套图 | `figures/MC19_GLMM_coral_run001_plot002/` |
-| 旧时间戳结果的重新作图 | `figures/MC19_GLMM_coral_legacy_plot001/` |
+| 原GLMM | results/MC19_GLMM_coral_run001/ |
+| PERMANOVA | results/MC19_PERMANOVA_ecosystem_run001/ |
+| 两部分 | results/MC19_two_part_coral_run001/ |
+| talk图 | figures/MC19_talk_coral_run001/ |
+| 配套图修订 | figures/MC19_GLMM_coral_run001_plot001/ |
 
-coral/ecosystem及每种分析各自编号。结果重跑增加`run`，只重画配套图增加`plot`；目录内PDF/PNG/CSV按内容命名。旧结果重新作图的来源完整路径记录在`run_record.csv`，`legacy_plot`不使用旧时间尾缀。
+各类型、范围独立编号，已分配ID由.run_registry保留，归档后也不复用。run_record.csv保存来源、方法版本、完成状态和时间。失败或不完整的批次不会发布为最新完成结果。
 
-每批`run_record.csv`记录类型、范围、方法版本、来源、UTC时间及完成状态；原有统计manifest和来源指纹继续保留。`v1/v2`表示分析方案版本，重新运行同一方案不会自动提高方法版本。
+未指定目录时，读取latest指针并检查编号目录中的完成批次，按run数字选择最新。统计版本、范围、8TS和模型/环境数量必须匹配；旧7TS批次不会自动选中，显式指定也会提示不符合当前版本。
 
-项目根`.run_registry/`保存已分配编号，随输出归档仍保留，因此失败批次和已归档批次的编号不会重用；编号允许有空缺。该目录保持本地忽略。分配使用独立目录的排他创建，支持同时启动两个会话。
+通用指针为`00_latest_MC19_<kind>_<scope>.txt`；辅助指针带`env5_TS8`（两部分带`TS8_env5`）。本次准备不改动任何已有结果指针，首次8TS新批次完成后自动发布。
 
-默认自动递增，通常不用设置编号。确需指定时，可在运行前设置一个高于已分配编号的值，使用后清除：
-
-```r
-options(mc19.run_id = "run010")
-# source相应分析或talk入口
-options(mc19.run_id = NULL)
-```
-
-## 最新结果如何读取
-
-1. 显式填写的结果目录优先；检查分析类型、范围和完成状态，填写错误时直接报错。
-2. 未指定目录时，同时检查新旧latest指针和当前results目录；只选择已完成的对应分析/范围。
-3. 新规则按运行编号的数值排序，`run1000`晚于`run999`；没有新编号批次时，按旧目录的时间戳选择。
-4. 指针缺失、指向不存在的目录、失败或未完成批次时，自动从其它已完成候选中恢复读取。读取不会重写指针或改动结果。
-5. 自动扫描限于当前results目录；已归档的结果可通过仍有效的指针或显式完整路径读取。不会把整个archive当作新结果扫描。
-
-新机器指针采用`00_latest_MC19_<类型>_<范围>.txt`；只有结果保存完整后才发布，同时更新原来的类型/范围专属指针。GLMM结果完成与模拟诊断完成分开记录，诊断状态继续保留在原配套文件中。两部分已完成但有需复核分模型的批次仍可读取。
-
-## 继续使用原入口
-
-原GLMM、PERMANOVA、诊断和talk入口不变；默认仍由`mc19.analysis_scope`选择范围。保留`mc19.glmm.result_dir`和`mc19.result_dir`指定历史来源的用法。
-
-两部分只重画最新完成结果，不用再手填目录：
-
-```r
-options(mc19.analysis_scope = "coral",
-        mc19.two_part.stage = "plot",
-        mc19.two_part.run_dir = "")
-source(file.path(project_dir, "scripts/GLMM/GLMM_MC19_two_part.R"), encoding="UTF-8")
-```
-
-两部分恢复拟合仍须显式指定原运行目录，沿用原输入、代码和软件版本校验。旧批次作图可直接读取；原代码快照保留在原批次配套文件中。
-
-talk默认每次新建一个图批次。若先画森林/NP，再向同批图补充NMDS，可设：
-
-```r
-options(mc19.talk.output_dir = "latest", mc19.talk.parts = c("NMDS2D", "NMDS3D"))
-# source plot_MC19_talk_figures.R
-options(mc19.talk.output_dir = NULL)
-```
-
-这会复用当前范围最新完成的talk目录及兼容坐标；GLMM来源不同时要求显式指定其原始来源。也可直接填写已有图目录。常规配套图默认新建`plot`修订；高级选项`mc19.glmm.figure_dir`、`mc19.figure_dir`、`mc19.two_part.figure_dir`可显式指定图目录。
-
-## 本次验证
-
-仅执行R语法检查、临时文件的编号/完成状态/指针/范围/归档保留编号测试，以及现有六批结果的只读加载。两个原GLMM明细读取、两部分筛选输入和两个PERMANOVA绘图上下文均只读通过。未运行拟合、PERMANOVA、NMDS、模拟诊断或正式绘图。
-
-回归检查入口：`test_mc19_run_io.R`。代码修改前备份：`archive/code_before_run_names_v1/`。
+旧7TS结果和图保留原目录供查阅，不增加旧数据兼容分支。检查程序`test_mc19_run_io.R`只操作临时测试文件，不运行研究分析。

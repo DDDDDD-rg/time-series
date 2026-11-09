@@ -1,4 +1,4 @@
-# 当前MC19 x 4营养盐/TS-only Wald作图：只读保存的76个有TS模型及P/q，不拟合、不模拟。
+# 当前MC19 x 5营养盐/TS-only Wald作图：只读保存的95个有TS模型及P/q，不拟合、不模拟。
 # 主图：19x4效应热图、全部BH显著MC×营养盐曲线（分页PDF及PNG）。无图题，英文标签。
 # 诊断PDF仍位于supporting_files/diagnostics；旧5份主PDF运行时移至supporting_files/previous_main_figures。
 # 历史bootstrap图用plot_GLMM_MC19_full_data.R；历史LOTO图用plot_GLMM_MC19_LOTO.R。
@@ -6,7 +6,7 @@
 local({
   analysis_scope <- getOption("mc19.analysis_scope", "coral")  # coral / ecosystem
   project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
-  results_dir <- ""              # 空字符串读env4/TS-only Wald独立latest。
+  results_dir <- ""              # 空字符串读env5/TS8/TS-only Wald独立latest。
 
   engine <- new.env(parent = globalenv())
   for (helper in c("glmm_MC19_pilot_helpers.R", "glmm_MC19_wald_helpers.R",

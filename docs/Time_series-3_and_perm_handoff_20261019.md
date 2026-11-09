@@ -137,7 +137,7 @@ MC15 在原始系数表中有点估计（DO 约 0.71344），但 Hessian 未正�
 4. 精简复核比较 D0、Z_TS_SD_Q、SD_M，复用保存结果：MC21、MC507 的 DO 方向和预测差异较稳定；MC0、MC10、MC15 的效应幅度更依赖结构。历史 MC15 有可复用的有效拟合，不代表 10 月 13 日完整重拟合也有效。
 5. 随后改写 GLMM.R 完整重拟合 Z_TS_SD_Q，并输出 beta 近似显著性；当前以第 5.1 节所列完整运行为准。
 
-历史运行主要在 `archive/GLMM_MC8/`，旧位置可能保留兼容联接。需要具体历史时按运行名定位：`GLMM_D_zero_penalty_MC8_20261012_160110`、`GLMM_structure_suite_MC8_20261012_185348`、`GLMM_structure_suite_MC8_20261012_235153`、`GLMM_saved_review_MC8_20261013_112414`。
+历史运行主要在 `archive/mc8_models/`，旧位置可能保留兼容联接。需要具体历史时按运行名定位：`GLMM_D_zero_penalty_MC8_20261012_160110`、`GLMM_structure_suite_MC8_20261012_185348`、`GLMM_structure_suite_MC8_20261012_235153`、`GLMM_saved_review_MC8_20261013_112414`。
 
 ## 6. PERMANOVA：数据范围、模型和置换
 
@@ -274,14 +274,14 @@ DIP 的原始低于检出限记录保留，但未纳入当前 8 项环境主检�
 
 ## 11. PPT、筛选理由与讲解文档
 
-- 当前主要 PPT：[timeseries_xzy_20261015.pptx](../presentations/timeseries_xzy_20261015.pptx)，备份 `timeseries_修改前备份_20261015.pptx`。用户曾由 timeseries.pptx 更名；编辑前确认指定文件，不误改 time+lasso.pptx。
+- 当前主要 PPT：[timeseries_xzy_20261015.pptx](../archive/old_outputs/presentations/timeseries_xzy_20261015.pptx)，备份 `timeseries_修改前备份_20261015.pptx`。用户曾由 timeseries.pptx 更名；编辑前确认指定文件，不误改 time+lasso.pptx。
 - 旧对话最后核对主 PPT 为 15 页；涵盖营养盐、宿主/时间/季节 PERMANOVA、DO 梯度、MC 丰度、GLMM、宿主 beta 热图及最后 Lasso。
 - 第 12 页已按要求加入 Selection rationale、保留 MC15 并写 Not estimable；用户曾要求删除整份 PPT 备注。后续核对以当前实际 PPT 为准。
 - 明确给定的标签：MC10=NGP，MC15/MC0=NGP control，MC6=Denitrifying specialists。功能标签原始证据与生态筛选依据分别记录。
 - 生态筛选来源：`data/source_tables/ISA_asv.xlsx`（IndVal>0.5）、`data/Cooccurence.xlsx`（共现对 n_TS≥4）、`data/source_tables/Network.xlsx`（betweenness 全库 top 5%，部分 top 1%）。这些表的单位为 ASV，通过 ASV–MC 对应提供候选证据。
 - 既有核对：MC6、MC21 三表都有；MC507 有宿主关联与网络；MC520 有宿主关联；MC25 有共现；MC10、MC15 有网络；MC0 未列三表。部分匹配为 `WEAK_ownMC`，原始质量标记应保留。
 - IndVal 入选阈值与 p 显著性分开；表中曾有 p=0.073 的入选记录。共现 `max_abs_r` 不保留方向；网络 top 5% 是排名，后续功能解释应追溯原始证据。
-- 已交付 [timeseries_逐页讲解与初步结论_20261015.docx](../presentations/timeseries_逐页讲解与初步结论_20261015.docx)，原对话记录为 35 页，逐页解释 PPT 的读图方法、知识点、初步结论与问答，含 GLMM 方程和来源。
+- 已交付 [timeseries_逐页讲解与初步结论_20261015.docx](../archive/old_outputs/presentations/timeseries_逐页讲解与初步结论_20261015.docx)，原对话记录为 35 页，逐页解释 PPT 的读图方法、知识点、初步结论与问答，含 GLMM 方程和来源。
 - PERMANOVA 的 PPT 静态图与四份嵌入 3D HTML 曾核对更新；用户要求气泡图保持完整、已附 PDF，尽量不改原有内容。
 - 最后 Lasso 的 selection rate 表示入选稳定性，区别于 p 值；候选生物学解释需结合注释来源和具体效应。
 
@@ -289,7 +289,7 @@ DIP 的原始低于检出限记录保留，但未纳入当前 8 项环境主检�
 
 10 月 14 日曾整理研究目录：当前脚本留 `scripts/`，当前结果与图留 `results/`、`figures/`，方法说明到 `docs/`，历史运行与备份到 `archive/`。旧路径的隐藏兼容联接指向同一份归档文件。原对话报告当时 9,437 个非占用标记文件内容一致、19 个 R 脚本语法通过；本次未重做该全目录校验。
 
-移动记录：[archive/organization_20261014/move_plan.csv](../archive/organization_20261014/move_plan.csv)。项目后来新增的 PPT/Word 仍可在根目录，不能仅凭整理约定猜其位置。
+移动记录：[archive/folder_layout_v1/move_plan.csv](../archive/folder_layout_v1/move_plan.csv)。项目后来新增的 PPT/Word 仍可在根目录，不能仅凭整理约定猜其位置。
 
 后续接续：
 

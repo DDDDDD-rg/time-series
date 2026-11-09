@@ -3,20 +3,21 @@
 
 mc19_pilot_config <- function(project_dir) {
   sys.source(file.path(project_dir, "scripts", "mc19_run_io.R"), envir=environment(mc19_pilot_config))
+  sys.source(file.path(project_dir, "scripts", "mc19_input.R"), envir=environment(mc19_pilot_config))
   list(
     version = "MC19_coral_nitrate_pilot_v1",
     project_dir = normalizePath(project_dir, winslash = "/", mustWork = TRUE),
-    workbook = file.path(project_dir, "data", "PERMANOVA_input_MC19_env7_20261026.xlsx"),
+    workbook = file.path(project_dir, "data", "MC19_TS8_env5.xlsx"),
     counts_file = file.path(project_dir, "data", "mc", "MC_abundance_absolute.tsv"),
     mc_ids = c("MC10", "MC6", "MC95", "MC376"),
     all_mc_ids = c("MC41", "MC95", "MC6", "MC507", "MC21", "MC451", "MC98",
       "MC2s1", "MC43", "MC25", "MC77", "MC376", "MC35", "MC472", "MC357",
       "MC80", "MC0", "MC10", "MC15"),
     environment = "Nitrate_mgN_L",
-    nutrient_fields = c("Nitrate_mgN_L", "Nitrite_mgN_L", "Ammonia_mgN_L", "DIP_mgP_L"),
+    nutrient_fields = mc19_env_fields,
     model_ids = c("BB_GLM", "BB_TS"),
     analysis_scope = "coral", complete_fields = "Nitrate_mgN_L",
-    expected_samples = 98L, expected_TS = 7L,
+    expected_samples = NULL, expected_TS = 8L,
     n_sim = 2000L, seed = 20261027L,
     results_root = file.path(project_dir, "results"),
     figures_root = file.path(project_dir, "figures"),
@@ -70,12 +71,12 @@ mc19_load_input <- function(cfg) {
   sheets <- lapply(c("Metadata", "Community", "Environment_TS"), function(sheet)
     as.data.frame(readxl::read_excel(cfg$workbook, sheet = sheet)))
   names(sheets) <- c("metadata", "community", "environment")
-  meta <- sheets$metadata; community <- sheets$community; env <- sheets$environment
+  meta <- sheets$metadata; community <- sheets$community; env <- mc19_prepare_environment(sheets$environment)
   required <- c("New_ID", "Sample_ID", "Host_type", "Host_niche", "TS", cfg$nutrient_fields)
   if (!all(required %in% names(meta)) ||
       !all(c("New_ID", cfg$all_mc_ids) %in% names(community)) ||
       !all(c("TS", "Sampling_month", cfg$nutrient_fields,
-        paste0(cfg$nutrient_fields, "_raw")) %in% names(env))) stop("输入工作表缺少约定字段。")
+        paste0(mc19_primary_env_fields, "_raw")) %in% names(env))) stop("输入工作表缺少约定字段。")
   for (name in c("metadata", "community")) {
     sheets[[name]]$New_ID <- trimws(as.character(sheets[[name]]$New_ID))
     ids <- sheets[[name]]$New_ID
@@ -89,16 +90,7 @@ mc19_load_input <- function(cfg) {
   community <- community[match(meta$New_ID, community$New_ID), , drop = FALSE]
   env_row <- match(meta$TS, env$TS)
   if (anyNA(env_row)) stop("Metadata的TS无法匹配Environment_TS。")
-  for (field in cfg$nutrient_fields) {
-    if (!is.numeric(meta[[field]]) || !is.numeric(env[[field]]) ||
-        !mc19_same(meta[[field]], env[[field]][env_row])) stop(field, "的两个工作表数值不一致。")
-    raw <- trimws(as.character(env[[paste0(field, "_raw")]]))
-    censored <- !is.na(raw) & grepl("^<", raw)
-    parsed <- suppressWarnings(as.numeric(sub("^<\\s*", "", raw)))
-    parsed[censored] <- parsed[censored] / 2
-    if (!mc19_same(parsed, env[[field]])) stop(field, "数值与原始值/L/2规则不一致。")
-    env[[paste0(field, "_censored")]] <- censored
-  }
+  meta <- mc19_match_environment(meta, env)
   is_coral <- !is.na(meta$Host_niche) & meta$Host_niche == "coral"
   scope <- if (is.null(cfg$analysis_scope)) "coral" else cfg$analysis_scope
   if (length(scope) != 1L || !scope %in% c("coral", "ecosystem")) stop("Invalid analysis scope.")
@@ -316,7 +308,7 @@ mc19_run_fit <- function(cfg) {
   mc19_write_text(c("8个先导模型；P/q尚未校准，留空。",
     "每个MC分别拟合BB_GLM和BB_TS；Beta-binomial/logit，恒定离散度，无零膨胀。",
     "98个coral原始样本；全部Ruegeria reads作分母；不按Repeat_group或TS平均。",
-    "E_z按7个TS的当期硝酸盐数值标准化，每个TS等权计算中心和标准差。",
+    "E_z按8个TS的当期硝酸盐数值标准化，每个TS等权计算中心和标准差。",
     "Wald95区间仅作先导数值参考，不是已完成TS校准的正式区间。",
     "BB_TS斜率是条件logit斜率；跨结构另比较积分后的边际预测占比变化。",
     "诊断只模拟，不重新拟合；本入口不执行逐TS留一、置换或bootstrap。",

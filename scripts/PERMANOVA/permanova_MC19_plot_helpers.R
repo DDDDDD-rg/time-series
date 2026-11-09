@@ -16,7 +16,7 @@ mc19_plot_context <- function(new_plot=FALSE) {
   if (!file.exists(source_rds)) stop("所选范围的保存分析文件不存在：", analysis_scope)
   saved <- readRDS(source_rds)
   if (!is.character(saved$version) || length(saved$version) != 1L ||
-      !saved$version %in% compatible_analysis_versions) stop("结果版本不符，不能使用旧MC8结果。")
+      !identical(saved$version, analysis_version)) stop("结果版本不符，不能使用历史7TS或MC8结果。")
   input <- saved$input
   saved_scope <- if (!is.null(saved$scope)) saved$scope else
     if (!is.null(input$scope)) input$scope else unique(saved$results$Scope)
@@ -27,7 +27,7 @@ mc19_plot_context <- function(new_plot=FALSE) {
     !anyDuplicated(input$metadata$New_ID), identical(saved$results$Factor, env_cols),
     all(saved$results$N_samples==nrow(input$metadata)), all(saved$results$N_MC==19L),
     all(saved$results$Status=="ok"), all(is.finite(saved$results$P_BH_raw)))
-  snapshot <- mc19_support_file(result_dir, "00_input_used_MC19_env7.xlsx")
+  snapshot <- mc19_support_file(result_dir, "00_input_used_MC19_TS8_env5.xlsx")
   if (!file.exists(snapshot) || !identical(unname(tools::md5sum(snapshot)), input$input_md5)) {
     stop("保存的输入快照与分析指纹不符。")
   }
@@ -38,7 +38,7 @@ mc19_plot_context <- function(new_plot=FALSE) {
   if (new_plot) dir.create(figure_dir, recursive=TRUE, showWarnings=FALSE)
   labels <- c(Salinity_psu="Salinity (psu)", SST_C="Temperature (deg C)", pH="pH",
     Nitrate_mgN_L="Nitrate (mg N/L)", Nitrite_mgN_L="Nitrite (mg N/L)",
-    Ammonia_mgN_L="Ammonia nitrogen (mg N/L)", DIP_mgP_L="DIP (mg P/L)")
+    Ammonia_mgN_L="Ammonia nitrogen (mg N/L)", DIN_mgN_L="DIN (mg N/L)", DIP_mgP_L="DIP (mg P/L)")
   ts_colours <- setNames(c("#0072B2","#D55E00","#009E73","#CC79A7",
     "#E69F00","#332288","#56B4E9","#333333"), ts_levels)
   hosts <- sort(unique(as.character(input$metadata$Host_type)))
@@ -107,7 +107,7 @@ mc19_main_plots <- function(context) {
   for (variable in env_cols) {
     display <- scores; display$Env_value <- display[[variable]]
     result <- context$saved$results[context$saved$results$Factor==variable, , drop=FALSE]
-    text <- paste(caption, sprintf("R2 = %.3f; BH q = %.4g (7 environment tests).", result$R2_raw, result$P_BH_raw), sep="\n")
+    text <- paste(caption, sprintf("R2 = %.3f; BH q = %.4g (5 environment tests).", result$R2_raw, result$P_BH_raw), sep="\n")
     plots[[paste0("NMDS_environment_", variable)]] <- list(plot=
       ggplot(display, aes(NMDS1, NMDS2, colour=Env_value)) + geom_point(size=2.5, alpha=0.9) +
       coord_equal() + scale_colour_gradientn(colours=grDevices::hcl.colors(128, "Viridis")) +
@@ -272,7 +272,7 @@ plot_mc19_suite <- function(parts=c("main","host","composition")) {
     if ("main" %in% parts && isTRUE(getOption("mc19.interactive_3d",FALSE))) mc19_export_3d(context)
     writeLines(enc2utf8(c(paste("MC19", analysis_scope, "figures"),paste("Source:",context$result_dir),
       "All points/heatmap columns/composition bars are individual samples; no sample averaging.",
-      "All seven environment tests are displayed, including nonsignificant tests; q comes from saved BH results.",
+      "All five environment tests are displayed, including nonsignificant tests; q comes from saved BH results.",
       "NMDS is a display of the saved Bray-Curtis distances; cached coordinates are reused.",
       "Host panels are descriptive only, with no Host_type or pairwise test.",
       "Environment lines connect observed TS records. MC-by-TS panels show raw sample points.",

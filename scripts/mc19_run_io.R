@@ -23,10 +23,9 @@ mc19_io_update <- function(path, ...) {
 }
 mc19_io_aliases <- function(project_dir, kind, scope, area="results") {
   names <- switch(kind,
-    GLMM=c(paste0("00_latest_GLMM_MC19_env4_TS_Wald_", scope, ".txt"),
-      if (scope == "coral") "00_latest_GLMM_MC19_env4_TS_Wald.txt"),
-    PERMANOVA=paste0("00_latest_PERMANOVA_MC19_env7_", scope, ".txt"),
-    two_part=paste0("00_latest_GLMM_MC19_two_part_", scope, ".txt"), character())
+    GLMM=paste0("00_latest_GLMM_MC19_env5_TS8_", scope, ".txt"),
+    PERMANOVA=paste0("00_latest_PERMANOVA_MC19_env5_TS8_", scope, ".txt"),
+    two_part=paste0("00_latest_GLMM_MC19_two_part_TS8_env5_", scope, ".txt"), character())
   file.path(project_dir, area, names)
 }
 mc19_io_pointer <- function(project_dir, kind, scope, area="results")
@@ -87,15 +86,18 @@ mc19_result_complete <- function(path, kind, scope) {
     if (kind == "GLMM") {
       m <- readRDS(file.path(s, "wald_manifest.rds"))
       saved_scope <- if (is.null(m$analysis_scope)) "coral" else m$analysis_scope
-      expected <- if (scope == "coral") "MC19_env4_coral_TS_Wald_v2" else "MC19_env4_ecosystem_TS_Wald_v1"
+      expected <- paste0("MC19_env5_TS8_", scope, "_Wald_v1")
       return(identical(saved_scope, scope) && identical(m$version, expected) &&
-        isTRUE(m$fit_complete) && length(m$model_files) == 76L &&
+        isTRUE(m$fit_complete) && identical(as.integer(m$n_TS), 8L) && length(m$model_files) == 95L &&
         file.exists(file.path(path, "00_result.csv")) && file.exists(file.path(s, "all_results.csv")))
     }
     if (kind == "PERMANOVA") {
       status <- readLines(file.path(s, "00_run_status.txt"), n=1L, warn=FALSE)
       t <- utils::read.csv(file.path(s, "environment_results_full.csv"), fileEncoding="UTF-8-BOM")
-      return(identical(status, "complete") && nrow(t) == 7L &&
+      return(identical(status, "complete") && nrow(t) == 5L &&
+        all(c("Scope", "Status", "N_TS", "Analysis_version") %in% names(t)) &&
+        !anyNA(t$N_TS) && !anyNA(t$Analysis_version) && all(t$N_TS == 8L) &&
+        all(t$Analysis_version == paste0("MC19_env5_TS8_", scope, "_individual_TSlabels_v1_vegan")) &&
         all(c("Scope", "Status") %in% names(t)) && !anyNA(t$Scope) && !anyNA(t$Status) &&
         all(t$Scope == scope) && all(t$Status == "ok") &&
         file.exists(file.path(path, "environment_results.csv")) &&
@@ -105,7 +107,10 @@ mc19_result_complete <- function(path, kind, scope) {
       status <- readLines(file.path(path, "run_status.txt"), n=1L, warn=FALSE)
       m <- readRDS(file.path(s, "manifest.rds"))
       t <- utils::read.csv(file.path(s, "all_results.csv"))
-      return(identical(m$scope, scope) && length(status) == 1L &&
+      parent <- readRDS(file.path(m$source, "supporting_files", "wald_manifest.rds"))
+      return(identical(m$scope, scope) &&
+        identical(parent$version, paste0("MC19_env5_TS8_", scope, "_Wald_v1")) &&
+        identical(as.integer(parent$n_TS), 8L) && length(status) == 1L &&
         status %in% c("fits_complete_review_diagnostics", "fits_complete_some_require_review") &&
         nrow(t) == 2L * length(m$keys) && file.exists(file.path(path, "00_result.csv")) &&
         all(file.exists(file.path(s, c("predictions.rds", "observations.rds")))))
@@ -124,27 +129,13 @@ mc19_latest_result <- function(project_dir, kind, scope, explicit="") {
   pointers <- c(mc19_io_pointer(project_dir, kind, scope), mc19_io_aliases(project_dir, kind, scope))
   pointed <- unlist(lapply(pointers[file.exists(pointers)], function(p)
     trimws(readLines(p, n=1L, warn=FALSE, encoding="UTF-8"))), use.names=FALSE)
-  legacy <- switch(kind, GLMM=paste0("GLMM_MC19_env4_TS_Wald_", scope),
-    PERMANOVA=paste0("PERMANOVA_MC19_env7_", scope, "_samples"),
-    two_part=paste0("GLMM_MC19_two_part_", scope))
-  pattern <- paste0("^(", mc19_io_prefix(kind, scope), "_run[0-9]{3,}|", legacy, "_[0-9]{8}_[0-9]{6})$")
+  pattern <- paste0("^", mc19_io_prefix(kind, scope), "_run[0-9]{3,}$")
   discovered <- list.files(file.path(project_dir, "results"), pattern=pattern, full.names=TRUE)
   paths <- unique(c(pointed[nzchar(pointed)], discovered))
   paths <- paths[vapply(paths, mc19_result_complete, logical(1), kind=kind, scope=scope)]
-  if (!length(paths)) stop("No completed ", kind, " result for ", scope, ". Supply an existing directory explicitly.")
-  # New numbered runs follow legacy timestamps. Compare run numbers numerically,
-  # not lexical names or directory mtimes (which change when plotting/archiving).
-  score <- lapply(paths, function(p) {
-    name <- basename(p); record <- mc19_io_record(p)
-    is_new <- grepl(paste0("^", mc19_io_prefix(kind, scope), "_run[0-9]+$"), name)
-    number <- if (is_new) as.numeric(sub(".*_run", "", name)) else 0
-    stamp <- if (grepl("_[0-9]{8}_[0-9]{6}$", name)) sub(".*_([0-9]{8})_([0-9]{6})$", "\\1\\2", name) else ""
-    if (!is.null(record) && identical(record$kind, kind) && identical(record$scope, scope)) stamp <- record$created_at
-    c(new=as.integer(is_new), number=number, stamp=stamp)
-  })
-  scores <- do.call(rbind, score)
-  index <- order(as.numeric(scores[,"new"]), as.numeric(scores[,"number"]), scores[,"stamp"], decreasing=TRUE)[1]
-  normalizePath(paths[index], winslash="/", mustWork=TRUE)
+  if (!length(paths)) stop("No completed ", kind, " result for ", scope, ". Run the current 8-TS analysis after completing its input.")
+  numbers <- as.numeric(sub(".*_run", "", basename(paths)))
+  normalizePath(paths[which.max(numbers)], winslash="/", mustWork=TRUE)
 }
 mc19_publish_result <- function(project_dir, kind, scope, path) {
   if (!mc19_result_complete(path, kind, scope)) stop("Refusing to publish incomplete result: ", path)

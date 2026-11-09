@@ -1,4 +1,4 @@
-# 当前MC19 x 4营养盐/TS-only Wald诊断。只读取保存的76个有TS模型，不重新拟合。
+# 当前MC19 x 5营养盐/TS-only Wald诊断。只读取保存的95个有TS模型，不重新拟合。
 # 模拟来自已保存的Beta-binomial模型；TS随机截距重新抽样。
 # 不重新拟合，不自动补零膨胀项，不置换，不bootstrap。
 # GLMM.R默认调用本诊断功能；单独重做诊断时运行本文件。
@@ -7,7 +7,7 @@
 local({
   analysis_scope <- getOption("mc19.analysis_scope", "coral")  # coral / ecosystem
   project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
-  results_dir <- ""              # 空字符串读env4/TS-only Wald专用latest。
+  results_dir <- ""              # 空字符串读env5/TS8/TS-only Wald专用latest。
   n_sim <- 2000L
   simulation_seed <- 20261027L
   refresh_plots <- TRUE

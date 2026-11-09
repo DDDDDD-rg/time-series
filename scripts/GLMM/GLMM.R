@@ -1,13 +1,12 @@
-# 当前入口：19MC x 4营养盐，仅TS随机截距 = 76个模型。
+# 当前入口：19MC x 5营养盐，仅TS随机截距 = 95个模型。
 # 固定公式：cbind(MC_reads, Other_reads) ~ E_z + (1 | TS)。
-# 由用户运行。glmmTMB自带Wald P；全部76项统一BH；不bootstrap/置换/LOTO。
+# 由用户运行。glmmTMB自带Wald P；全部95项统一BH；不bootstrap/置换/LOTO。
 # Coral/ecosystem原始独立样本；不平均，无Host/Repeat/水温项。
-# 默认核对后仅复用120255的4个有TS硝酸盐拟合，新增72个。
+# 完整8TS重新拟合；不复用旧7TS模型。
 
 local({
   analysis_scope <- getOption("mc19.analysis_scope", "coral")  # coral / ecosystem
   project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
-  reuse_pilot_fits <- TRUE       # FALSE时从头拟合76个；不影响模型公式。
   run_diagnostics <- TRUE        # 读取保存模型做诊断，不重拟合。
   run_plots <- TRUE
   n_sim <- 2000L                 # 仅诊断模拟，绝不用于beta P值。
@@ -17,7 +16,7 @@ local({
   for (helper in c("glmm_MC19_pilot_helpers.R", "glmm_MC19_wald_helpers.R",
       "glmm_MC19_wald_plot_helpers.R")) sys.source(file.path(project_dir, "scripts", "GLMM", helper), envir = engine)
   cfg <- engine$mc19_wald_config(project_dir, analysis_scope)
-  cfg$reuse_pilot <- reuse_pilot_fits && analysis_scope == "coral"; cfg$n_sim <- n_sim; cfg$seed <- simulation_seed
+  cfg$n_sim <- n_sim; cfg$seed <- simulation_seed
   engine$mc19_require(c("readxl", "glmmTMB", if (run_diagnostics) "DHARMa"))
   run_dir <- engine$mc19_wald_run(cfg)
   notices <- character()
@@ -31,6 +30,6 @@ local({
     warning(paste(notices, collapse = "\n"), call. = FALSE)
   }
   cat("\nWald流程结束。主表：", file.path(run_dir, "00_result.csv"),
-    paste0("\n", analysis_scope, "：76个有TS模型，本范围Wald beta检验统一BH；未运行bootstrap、置换或LOTO。\n"), sep = "")
+    paste0("\n", analysis_scope, "：95个有TS模型，本范围Wald beta检验统一BH；未运行bootstrap、置换或LOTO。\n"), sep = "")
   invisible(run_dir)
 })
