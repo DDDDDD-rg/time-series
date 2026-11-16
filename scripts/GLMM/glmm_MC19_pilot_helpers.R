@@ -17,7 +17,7 @@ mc19_pilot_config <- function(project_dir) {
     nutrient_fields = mc19_env_fields,
     model_ids = c("BB_GLM", "BB_TS"),
     analysis_scope = "coral", complete_fields = "Nitrate_mgN_L",
-    expected_samples = NULL, expected_TS = 8L,
+    expected_samples = NULL, expected_TS = mc19_profile()$n_TS,
     n_sim = 2000L, seed = 20261027L,
     results_root = file.path(project_dir, "results"),
     figures_root = file.path(project_dir, "figures"),
@@ -67,11 +67,14 @@ mc19_load_input <- function(cfg) {
       !identical(cfg$model_ids, c("BB_GLM", "BB_TS"))) {
     stop("本入口只执行4MC×硝酸盐×两种结构的8个先导模型。")
   }
-  fingerprints <- mc19_hash(c(cfg$workbook, cfg$counts_file))
+  fingerprints <- mc19_hash(c(cfg$workbook, cfg$counts_file, if(mc19_profile()$temperature) mc19_temperature_source(cfg$project_dir)))
   sheets <- lapply(c("Metadata", "Community", "Environment_TS"), function(sheet)
     as.data.frame(readxl::read_excel(cfg$workbook, sheet = sheet)))
   names(sheets) <- c("metadata", "community", "environment")
+  chosen <- mc19_select_samples(sheets$metadata,sheets$community)
+  sheets$metadata <- chosen$metadata; sheets$community <- chosen$community
   meta <- sheets$metadata; community <- sheets$community; env <- mc19_prepare_environment(sheets$environment)
+  mc19_verify_temperature(env,cfg$project_dir)
   required <- c("New_ID", "Sample_ID", "Host_type", "Host_niche", "TS", cfg$nutrient_fields)
   if (!all(required %in% names(meta)) ||
       !all(c("New_ID", cfg$all_mc_ids) %in% names(community)) ||

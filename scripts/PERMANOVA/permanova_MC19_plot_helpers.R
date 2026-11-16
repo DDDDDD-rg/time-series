@@ -40,7 +40,7 @@ mc19_plot_context <- function(new_plot=FALSE) {
     Nitrate_mgN_L="Nitrate (mg N/L)", Nitrite_mgN_L="Nitrite (mg N/L)",
     Ammonia_mgN_L="Ammonia nitrogen (mg N/L)", DIN_mgN_L="DIN (mg N/L)", DIP_mgP_L="DIP (mg P/L)")
   ts_colours <- setNames(c("#0072B2","#D55E00","#009E73","#CC79A7",
-    "#E69F00","#332288","#56B4E9","#333333"), ts_levels)
+    "#E69F00","#332288","#56B4E9","#333333")[seq_along(ts_levels)], ts_levels)
   hosts <- sort(unique(as.character(input$metadata$Host_type)))
   host_colours <- setNames(grDevices::hcl.colors(length(hosts), "Dark 3"), hosts)
   coral_colours <- c("Acropora sp."="#0072B2", "Montipora sp."="#D55E00", "Platygyra sp."="#009E73")
@@ -107,7 +107,7 @@ mc19_main_plots <- function(context) {
   for (variable in env_cols) {
     display <- scores; display$Env_value <- display[[variable]]
     result <- context$saved$results[context$saved$results$Factor==variable, , drop=FALSE]
-    text <- paste(caption, sprintf("R2 = %.3f; BH q = %.4g (5 environment tests).", result$R2_raw, result$P_BH_raw), sep="\n")
+    text <- paste(caption, sprintf("R2 = %.3f; BH q = %.4g (%d environment tests).", result$R2_raw, result$P_BH_raw,length(env_cols)), sep="\n")
     plots[[paste0("NMDS_environment_", variable)]] <- list(plot=
       ggplot(display, aes(NMDS1, NMDS2, colour=Env_value)) + geom_point(size=2.5, alpha=0.9) +
       coord_equal() + scale_colour_gradientn(colours=grDevices::hcl.colors(128, "Viridis")) +
@@ -119,7 +119,7 @@ mc19_main_plots <- function(context) {
   plots$environment_R2_BH <- list(plot=ggplot(results, aes(R2_raw, Indicator)) +
     geom_col(fill="grey60", width=0.65) + geom_text(aes(label=Label), hjust=-0.05, size=3.2) +
     scale_x_continuous(expand=expansion(mult=c(0.02,0.65))) +
-    labs(x="PERMANOVA R2", y=NULL, caption="Seven single-environment tests; BH q values read from saved results.") +
+    labs(x="PERMANOVA R2", y=NULL, caption=sprintf("%d single-environment tests; BH q read from saved results.",length(env_cols))) +
     mc19_theme(), width=10, height=6)
   batches <- context$input$batches
   environment_long <- do.call(rbind, lapply(env_cols, function(variable) {
@@ -211,7 +211,8 @@ mc19_pdf_tools <- function() {
   bundled <- if (nzchar(profile)) file.path(profile, ".cache", "codex-runtimes",
     "codex-primary-runtime", "dependencies", "python", "python.exe") else character()
   candidates <- unique(c(getOption("mc19.python", character()), Sys.getenv("MC19_PYTHON", unset=""),
-    unname(Sys.which(c("python", "python3"))), bundled))
+    unname(Sys.which(c("python", "python3"))), bundled,
+    Sys.glob("C:/Program Files/WindowsApps/OpenAI.CodexPrimaryRuntime.*/dependencies/python/python.exe")))
   candidates <- candidates[nzchar(candidates) & file.exists(candidates)]
   script <- file.path(project_dir, "scripts", "PERMANOVA", "bundle_MC19_figures.py")
   if (!file.exists(script)) stop("缺少PDF合并脚本：", script)
@@ -225,7 +226,7 @@ mc19_pdf_tools <- function() {
 
 mc19_bundle_figures <- function(context, tools, allow_partial=FALSE) {
   arguments <- c("-X", "utf8", shQuote(tools$script), "--figure-dir", shQuote(context$figure_root),
-    if (allow_partial) "--allow-partial")
+    if (allow_partial) "--allow-partial", "--environments", env_cols)
   output <- suppressWarnings(system2(tools$python, arguments, stdout=TRUE, stderr=TRUE))
   status <- attr(output, "status")
   if (!is.null(status) && status != 0L) stop("合并PDF失败：", paste(output, collapse="\n"))
@@ -245,7 +246,7 @@ plot_mc19_suite <- function(parts=c("main","host","composition")) {
     if ("host" %in% parts) plots <- c(plots,mc19_host_plot(context,allow_nmds_fit="main" %in% parts))
     if ("composition" %in% parts) plots <- c(plots,mc19_composition_plots(context))
     source_names <- c("permanova_MC19_plot_helpers.R","permanova_MC19_data_settings.R","04_plot_permanova.R",
-      "07_plot_host_highlight_panels.R","plot_MC_environment_composition.R","bundle_MC19_figures.py","../mc19_run_io.R")
+      "07_plot_host_highlight_panels.R","plot_MC_environment_composition.R","bundle_MC19_figures.py","../mc19_run_io.R","../mc19_profile.R")
     snapshot <- file.path(context$figure_dir,"scripts_used")
     dir.create(snapshot,showWarnings=FALSE)
     if (!all(file.copy(file.path(project_dir,"scripts", "PERMANOVA",source_names),snapshot,overwrite=TRUE))) stop("作图脚本快照失败。")
@@ -272,7 +273,7 @@ plot_mc19_suite <- function(parts=c("main","host","composition")) {
     if ("main" %in% parts && isTRUE(getOption("mc19.interactive_3d",FALSE))) mc19_export_3d(context)
     writeLines(enc2utf8(c(paste("MC19", analysis_scope, "figures"),paste("Source:",context$result_dir),
       "All points/heatmap columns/composition bars are individual samples; no sample averaging.",
-      "All five environment tests are displayed, including nonsignificant tests; q comes from saved BH results.",
+      sprintf("All %d environment tests are displayed; q comes from saved BH results.",length(env_cols)),
       "NMDS is a display of the saved Bray-Curtis distances; cached coordinates are reused.",
       "Host panels are descriptive only, with no Host_type or pairwise test.",
       "Environment lines connect observed TS records. MC-by-TS panels show raw sample points.",

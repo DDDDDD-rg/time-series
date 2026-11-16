@@ -1,4 +1,14 @@
-# MC19时间序列：8TS运行说明
+# MC19时间序列：运行说明
+
+2026-11-16联合GLMM更新：当前[七TS普通联合入口](GLMM/GLMM_MC19_joint_TS7.R)同时考虑NO3、NO2、总氨氮、DIP和温度，不加DIN；每范围19模型、95个条件系数，默认check。温度逐TS核对PM11表层原CSV；只读共线性与隔离检查通过，正式fit由用户运行。使用独立`joint_glmm_TS7_env5_{scope}_runNNN`结果目录，旧四营养盐联合结果保留。详见[运行说明](GLMM/GLMM_MC19_joint_TS7_README.md)。下方四营养盐联合入口说明为历史准备记录；六指标单环境流程仍独立保留DIN。
+
+2026-11-16最新：按用户新要求，七TS入口恢复DIN并保留DIP，共NO3-N、NO2-N、总氨氮、DIN、DIP、温度六项；使用独立TS7_env6版本，全量重新拟合每范围114项GLMM、重新计算六项PERMANOVA，two-part仅跟进新GLMM的BH显著组合。结果/作图仍分开，默认只读check；本轮只改脚本，未运行正式分析。见[当前运行说明](TS7_temperature_README.md)。以下2026-11-15五指标增量记录为历史方案，已被本项替代。
+
+2026-11-15最新：七TS温度入口现为“四项营养盐＋温度”的增量版，排除DIN。核对并复用旧76个营养盐GLMM，只补缺少缓存的温度模型；95项统一BH。PERMANOVA复用五项原始结果、重算五项BH。结果与作图分别使用results/plots，见[最新运行说明](TS7_temperature_README.md)。下方六指标/114项为此前准备记录，已由本决定替代。
+
+2026-11-15新增：用户指定的当前七TS全流程补入温度，使用[TS7_temperature.R](TS7_temperature.R)，详见[七TS温度全流程运行说明](TS7_temperature_README.md)。覆盖单指标GLMM、PERMANOVA、two-part、全套静态图与交互NMDS；六指标为五项营养盐加水温。默认只读check，正式计算由用户运行；联合GLMM脚本和结果不改动。下方八TS主流程保留其完整输入要求。
+
+2026-11-15新增：用户明确要求准备当前七TS的普通联合GLMM，独立入口为[GLMM_MC19_joint_TS7.R](GLMM/GLMM_MC19_joint_TS7.R)，详见[运行与代码解读](GLMM/GLMM_MC19_joint_TS7_README.md)。该入口同时考虑四项营养盐，默认check模式，不执行拟合；正式fit时为每范围19模型、76个条件系数。它不改动下述八TS主流程和完整性要求，已有模型及结果不覆盖。
 
 更新：2026-11-02。正式流程统一为TS1–TS8、19MC和五项营养盐，直接替代旧7TS输入。现有7TS结果表和图保留。当前TS8环境数据待填，本次仅准备输入与源码，没有重新运行分析。
 

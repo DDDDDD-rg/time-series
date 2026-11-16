@@ -4,7 +4,7 @@ mc19_tp_input <- function(project_dir,scope,source_dir='') {
   for(f in c('glmm_MC19_pilot_helpers.R','glmm_MC19_wald_helpers.R')) sys.source(file.path(project_dir,'scripts','GLMM',f),e)
   run <- e$mc19_wald_read_run(e$mc19_wald_config(project_dir,scope),source_dir)
   s <- run$results; s <- s[s$numerical_ok %in% TRUE & is.finite(s$beta_q_value) & s$beta_q_value<.05,]
-  if(!nrow(s)) stop('新的8TS原GLMM没有BH q<0.05组合，无需运行two-part。',call.=FALSE)
+  if(!nrow(s)) return(list(selected=s,data=data.frame(),source=run$run_dir,fingerprints=character(),scope=scope))
   s$key <- paste(s$MC_ID,s$environment,sep='__');stopifnot(!anyDuplicated(s$key))
   path <- file.path(run$support,'analysis_input.csv');d <- read.csv(path,stringsAsFactors=FALSE)
   d$key <- paste(d$MC_ID,d$environment,sep='__');d <- d[d$key %in% s$key,]
@@ -12,11 +12,11 @@ mc19_tp_input <- function(project_dir,scope,source_dir='') {
     all(d$MC_reads>=0),all(d$MC_reads<=d$Ruegeria_reads_total),all(d$Ruegeria_reads_total>0),
     all(abs(d$MC_proportion-d$MC_reads/d$Ruegeria_reads_total)<1e-10))
   stopifnot(all(d$MC_proportion[d$MC_reads>0]>0 & d$MC_proportion[d$MC_reads>0]<1))
-  stopifnot(all(table(d$key)==unique(s$n_samples)),length(unique(d$TS))==8)
+  stopifnot(all(table(d$key)==unique(s$n_samples)),length(unique(d$TS))==e$mc19_profile()$n_TS)
   if(scope=='coral') stopifnot(all(tolower(d$Host_niche)=='coral')) else
     stopifnot(!any(tolower(d$Host_niche) %in% c('env','seawater','sediment')))
   for(k in s$key) {
-    z <- d[d$key==k,];u <- unique(z[c('TS','E_raw','E_z')]);stopifnot(nrow(u)==8,!anyDuplicated(u$TS))
+    z <- d[d$key==k,];u <- unique(z[c('TS','E_raw','E_z')]);stopifnot(nrow(u)==e$mc19_profile()$n_TS,!anyDuplicated(u$TS))
   }
   fingerprints <- tools::md5sum(c(path,file.path(run$support,'all_results.csv')))
   list(selected=s,data=d,source=run$run_dir,fingerprints=fingerprints,scope=scope)
@@ -73,7 +73,7 @@ mc19_tp_forest_labels <- function(tab) {
   }
   rows$symbol <- paste0(ifelse(rows$detection_significant,'*',''),
     ifelse(rows$positive_significant,'#',''))
-  labels <- c(Nitrate_mgN_L='NO3-N',Nitrite_mgN_L='NO2-N',Ammonia_mgN_L='Ammonia-N',DIN_mgN_L='DIN',DIP_mgP_L='DIP')
+  labels <- c(Nitrate_mgN_L='NO3-N',Nitrite_mgN_L='NO2-N',Ammonia_mgN_L='Ammonia-N',DIN_mgN_L='DIN',DIP_mgP_L='DIP',SST_C='Temperature')
   env <- unname(labels[rows$environment]);env[is.na(env)] <- rows$environment[is.na(env)]
   rows$label <- paste0(rows$MC_ID,ifelse(nzchar(rows$symbol),paste0(' ',rows$symbol),''),' / ',env)
   # Keep the focal MCs together at the top; include only rows actually analysed.
@@ -113,7 +113,7 @@ mc19_tp_curve_page <- function(tab,pred,obs,key) {
   field <- unique(rows$environment);mc <- unique(rows$MC_ID)
   stopifnot(length(field)==1L,length(mc)==1L)
   axis_label <- unname(c(Nitrate_mgN_L='Nitrate-N (mg N/L)',Nitrite_mgN_L='Nitrite-N (mg N/L)',
-    Ammonia_mgN_L='Ammonia-N (mg N/L)',DIN_mgN_L='DIN (mg N/L)',DIP_mgP_L='DIP (mg P/L)')[field])
+    Ammonia_mgN_L='Ammonia-N (mg N/L)',DIN_mgN_L='DIN (mg N/L)',DIP_mgP_L='DIP (mg P/L)',SST_C='Temperature (deg C)')[field])
   # A common full/zoom range for the same MC across its nutrient pages.
   mc_keys <- tab$key[tab$MC_ID==mc]
   op <- obs[obs$key %in% mc_keys & obs$component=='positive',]
@@ -325,6 +325,17 @@ mc19_tp_run <- function(input,project_dir,out) {
   file.copy(file.path(project_dir,'scripts','mc19_run_io.R'),file.path(support,'mc19_run_io.R'),overwrite=TRUE)
   writeLines(capture.output(sessionInfo()),file.path(support,'sessionInfo.txt'))
   ans <- preds <- observations <- list();tasks <- 2L*nrow(input$selected)
+  reuse_audit <- list()
+  if(mc19_profile()$incremental) {
+    sys.source(file.path(project_dir,'scripts','mc19_temperature_incremental.R'),envir=environment())
+    for(k in input$selected$key) for(part in c('detection','positive')) {
+      target <- file.path(support,'models',paste0(k,'__',part,'.rds'))
+      if(!file.exists(target)) {
+        cache <- mc19_incremental_tp_cache(input,project_dir,k,part)
+        if(!is.null(cache)) saveRDS(cache,target)
+      }
+    }
+  }
   for(i in seq_len(nrow(input$selected))) for(component in c('detection','positive')) {
     key <- input$selected$key[i];cache <- file.path(support,'models',paste0(key,'__',component,'.rds'))
     if(file.exists(cache)) fit <- readRDS(cache) else {
@@ -332,6 +343,9 @@ mc19_tp_run <- function(input,project_dir,out) {
       fit <- mc19_tp_fit(input$data[input$data$key==key,],component)
       saveRDS(fit,cache)
     }
+    reuse_audit[[length(reuse_audit)+1L]] <- data.frame(key=key,component=component,
+      origin=if(!is.null(fit$reused_from))'reused_validated_component' else 'new_component_fit',
+      source=if(!is.null(fit$reused_from))fit$reused_from else '')
     row <- fit$result;row$key <- key;row$MC_ID <- input$selected$MC_ID[i];row$environment <- input$selected$environment[i]
     ans[[length(ans)+1L]] <- row
     for(type in c('predictions','residuals')) if(!is.null(fit[[type]])) {
@@ -339,6 +353,7 @@ mc19_tp_run <- function(input,project_dir,out) {
       if(type=='predictions') preds[[length(preds)+1L]] <- z else observations[[length(observations)+1L]] <- z
     }
   }
+  write.csv(do.call(rbind,reuse_audit),file.path(support,'reuse_audit.csv'),row.names=FALSE)
   tab <- do.call(rbind,ans);tab$q <- p.adjust(tab$P,'BH',n=tasks);tab$q_family_size <- tasks
   tab$OR <- exp(tab$beta)
   write.csv(tab,file.path(support,'all_results.csv'),row.names=FALSE)
@@ -359,7 +374,7 @@ mc19_tp_run <- function(input,project_dir,out) {
   writeLines(c(paste('Source:',input$source),paste('Fixed family size:',tasks),
     'Exploratory decomposition after selection in the same data; within-selected BH is not whole-pipeline FDR control.',
     'Detection: Bernoulli/logit; positive: Beta/logit; both E_z + (1|TS); original denominator and E_z retained.',
-    'No depth/Host/Repeat/SST covariate added. Inspect depth and residuals. Detection is observed sequencing detection.',
+    'One environment per model, including temperature when selected; no depth/Host/Repeat covariate added. Inspect depth and residuals. Detection is observed sequencing detection.',
     'Predictions use TS random intercept zero, not population-integrated means.'),file.path(out,'README.txt'))
   writeLines(if(all(tab$numerical_ok)) 'fits_complete_review_diagnostics' else 'fits_complete_some_require_review',file.path(out,'run_status.txt'))
   mc19_publish_result(project_dir,'two_part',input$scope,out)

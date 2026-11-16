@@ -39,6 +39,7 @@ mc19_heatmap_forest <- function(results,cfg) {
   text(mx,yy,display_ids,adj=0,font=2,cex=.95)
   text(sx,yy,rationale,adj=0,cex=.85)
   lim <- max(abs(results$beta_per_TS_SD[results$numerical_ok %in% TRUE]),na.rm=TRUE)
+  if(!is.finite(lim) || lim==0) lim <- 1
   pal <- colorRampPalette(c('#083DCC','white','#D00000'))(201)
   visible <- results[results$environment %in% forest_env & results$numerical_ok %in% TRUE,]
   forestlim <- if(nrow(visible)) range(c(0,visible$CI95_low,visible$CI95_high),finite=TRUE) else c(-1,1)
@@ -67,25 +68,25 @@ mc19_heatmap_forest <- function(results,cfg) {
     text((left+right)/2,.975,labels[j],font=2,cex=1.1)
   }
   if(!length(forest_env)) text((forestleft+1)/2,.5,'No environmental panel has BH q < 0.05.',cex=1)
-  text(forestleft+.30/W,.032,'Beta per TS nutrient SD; bars: pointwise 95% Wald CI.\nForest panels: nutrients with any MC q < 0.05. Filled points / *: saved BH q < 0.05 (95 tests).',adj=c(0,.5),cex=.8)
+  text(forestleft+.30/W,.032,sprintf('Beta per TS environment SD; bars: pointwise 95%% Wald CI.\nForest panels: environments with any MC q < 0.05. Filled points / *: saved BH q < 0.05 (%d tests).',cfg$q_family_size),adj=c(0,.5),cex=.8)
   # Numeric heatmap key; same range and colours as the effect cells.
   for(k in 1:201) rect(heatleft+(k-1)/201*heatwidth,.058,heatleft+k/201*heatwidth,.069,col=pal[k],border=NA)
   text(heatleft+c(0,.5,1)*heatwidth,.038,formatC(c(-lim,0,lim),digits=2,format='f'),cex=.75)
 }
 mc19_export_heatmap_forest <- function(stem,results,cfg) {
-  mc19_main_export(stem,function() mc19_heatmap_forest(results,cfg),width=32,height=18,pointsize=24)
+  mc19_main_export(stem,function() mc19_heatmap_forest(results,cfg),width=max(32,18+4*sum(vapply(cfg$environments,function(f) any(results$environment==f & is.finite(results$beta_q_value) & results$beta_q_value<.05),logical(1)))),height=18,pointsize=24)
 }
 mc19_np_plot <- function(environment,out) {
-  fields <- c('Nitrate_mgN_L','Nitrite_mgN_L','Ammonia_mgN_L','DIN_mgN_L','DIP_mgP_L')
-  labs <- c('NO3-N (mg N/L)','NO2-N (mg N/L)','Ammonia nitrogen (mg N/L)','DIN (mg N/L)','DIP (mg P/L)')
+  fields <- mc19_profile()$fields
+  labs <- unname(c(Nitrate_mgN_L='NO3-N (mg N/L)',Nitrite_mgN_L='NO2-N (mg N/L)',Ammonia_mgN_L='Total ammonia nitrogen (mg N/L)',DIN_mgN_L='DIN (mg N/L)',DIP_mgP_L='DIP (mg P/L)',SST_C='Temperature (deg C)')[fields])
   e <- environment[order(as.integer(sub('TS','',environment$TS))),]
-  e <- e[e$TS %in% paste0('TS',1:8),];stopifnot(nrow(e)==8,!anyDuplicated(e$TS))
+  e <- e[e$TS %in% mc19_profile()$ts,];stopifnot(nrow(e)==mc19_profile()$n_TS,!anyDuplicated(e$TS))
   d <- do.call(rbind,lapply(seq_along(fields),function(j) {
     raw <- as.character(e[[paste0(fields[j],'_raw')]])
     data.frame(TS=e$TS,Date=as.Date(e$Water_quality_date),Indicator=labs[j],Value=e[[fields[j]]],Censored=as.logical(e[[paste0(fields[j],'_censored')]]))
   }))
   d$Indicator <- factor(d$Indicator,levels=labs)
-  lod <- data.frame(Indicator=factor(labs[c(2,5)],levels=labs),LOD=.002,
+  lod <- data.frame(Indicator=factor(labs[match(c("Nitrite_mgN_L","DIP_mgP_L"),fields)],levels=labs),LOD=.002,
     Date=as.Date(e$Water_quality_date[1]),Label_y=c(.0033,.0045),Label='LOD = 0.002')
   p <- ggplot2::ggplot(d,ggplot2::aes(Date,Value))+
     ggplot2::geom_hline(data=lod,ggplot2::aes(yintercept=LOD),inherit.aes=FALSE,linetype=2,colour='grey35',linewidth=.75)+
@@ -95,15 +96,15 @@ mc19_np_plot <- function(environment,out) {
       hjust=0,size=5.5,fontface='bold',linewidth=0,fill='white',label.padding=grid::unit(.10,'lines'))+
     ggplot2::facet_wrap(~Indicator,ncol=2,scales='free_y')+
     ggplot2::scale_x_date(breaks=as.Date(e$Water_quality_date),labels=paste(e$TS,e$Sampling_month,sep='\n'))+
-    ggplot2::labs(x=NULL,y=NULL,shape=NULL,caption='Dashed lines: NO2-N LOD = 0.002 mg N/L; DIP LOD = 0.002 mg P/L. Open circles: below LOD, shown at L/2.\nOne water-quality record per TS (TS1-TS8); DIN = NO3-N + NO2-N + Ammonia-N. For DIN, open circles indicate a component below RL.')+
+    ggplot2::labs(x=NULL,y=NULL,shape=NULL,caption=sprintf('Dashed horizontal lines: NO2-N/DIP RL = 0.002; open circles: L/2.\nOne PM11 surface-water record per TS (TS1-TS%d); %d selected indicators%s.',mc19_profile()$n_TS,mc19_profile()$n_env,if(mc19_profile()$temperature) '; temperature in degrees C' else ''))+
     mc19_talk_theme()+ggplot2::theme(axis.text.x=ggplot2::element_text(angle=45,hjust=1,size=17,face='bold'),legend.position='bottom',panel.spacing=grid::unit(1.2,'lines'))
   mc19_talk_save(p,file.path(out,'NP_by_TS'),20,14)
   write.csv(d,file.path(out,'NP_by_TS_data.csv'),row.names=FALSE)
 }
 mc19_talk_3d_widget <- function(d,results,scope,stress,initial='Nitrite_mgN_L') {
-  fields <- c('Nitrate_mgN_L','Nitrite_mgN_L','Ammonia_mgN_L','DIN_mgN_L','DIP_mgP_L')
+  fields <- mc19_profile()$fields
   stopifnot(initial %in% fields,all(is.finite(as.matrix(d[c('NMDS1','NMDS2','NMDS3')]))))
-  short <- c(Nitrate_mgN_L='NO3-N',Nitrite_mgN_L='NO2-N',Ammonia_mgN_L='Ammonia-N',DIN_mgN_L='DIN',DIP_mgP_L='DIP')
+  short <- c(Nitrate_mgN_L='NO3-N',Nitrite_mgN_L='NO2-N',Ammonia_mgN_L='Ammonia-N',DIN_mgN_L='DIN',DIP_mgP_L='DIP',SST_C='Temperature')
   xyz <- as.matrix(d[c('NMDS1','NMDS2','NMDS3')])
   lower <- apply(xyz,2,min);upper <- apply(xyz,2,max)
   span <- pmax(upper-lower,.001)
@@ -120,13 +121,13 @@ mc19_talk_3d_widget <- function(d,results,scope,stress,initial='Nitrite_mgN_L') 
   w <- plotly::plot_ly(height=850)
   for(field in fields) {
     value <- d[[field]];stopifnot(all(is.finite(value)))
-    hover <- paste0('Sample: ',d$Sample_ID,'<br>TS: ',d$TS,'<br>',short[field],': ',value,if(field=='DIP_mgP_L') ' mg P/L' else ' mg N/L')
+    hover <- paste0('Sample: ',d$Sample_ID,'<br>TS: ',d$TS,'<br>',short[field],': ',value,if(field=='SST_C') ' deg C' else if(field=='DIP_mgP_L') ' mg P/L' else ' mg N/L')
     w <- plotly::add_trace(w,type='scatter3d',mode='markers',
       x=d$NMDS1,y=d$NMDS2,z=d$NMDS3,ids=as.character(d$New_ID),text=hover,hoverinfo='text',
       name=unname(short[field]),visible=field==initial,showlegend=FALSE,
       marker=list(size=3.3,opacity=.65,color=value,colorscale=colour_scale,
         cmin=min(value),cmax=max(value),showscale=TRUE,
-        colorbar=list(title=list(text=paste0('<b>',short[field],if(field=='DIP_mgP_L') '<br>(mg P/L)</b>' else '<br>(mg N/L)</b>'),font=list(size=20)),
+        colorbar=list(title=list(text=paste0('<b>',short[field],if(field=='SST_C') '<br>(deg C)</b>' else if(field=='DIP_mgP_L') '<br>(mg P/L)</b>' else '<br>(mg N/L)</b>'),font=list(size=20)),
           tickfont=list(size=18),x=1.035,y=.38,len=.60)),inherit=FALSE)
   }
   # Disable automatic scene axes: Plotly relocates their rendered edges with the
@@ -229,7 +230,7 @@ mc19_talk_nmds <- function(context,out,dimensions=c(2L,3L),trymax=500L,cache_onl
   stopifnot(requireNamespace('vegan',quietly=TRUE))
   ids <- as.character(context$input$metadata$New_ID)
   results <- context$saved$results
-  fields <- c('Nitrate_mgN_L','Nitrite_mgN_L','Ammonia_mgN_L','DIN_mgN_L','DIP_mgP_L')
+  fields <- mc19_profile()$fields
   diag <- list()
   for(k in dimensions) {
     cachepath <- file.path(out,paste0('NMDS',k,'D.rds'))

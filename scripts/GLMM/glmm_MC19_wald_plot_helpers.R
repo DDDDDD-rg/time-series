@@ -49,8 +49,8 @@ mc19_main_heatmap <- function(results, cfg) {
   graphics::text(.13, .972, "Selection rationale", adj = 0, font = 2, cex = .88)
   graphics::segments(.025, .952, .55, .952, col = "black", lwd = .8)
   graphics::segments(.025, bottom, .55, bottom, col = "black", lwd = .8)
-  w <- (right - left) / 4; h <- (top - bottom) / 19
-  for (i in seq_len(19)) for (j in seq_len(4)) {
+  w <- (right - left) / length(cfg$environments); h <- (top - bottom) / length(cfg$mc_ids)
+  for (i in seq_along(cfg$mc_ids)) for (j in seq_along(cfg$environments)) {
     x <- left + (j - 1) * w; y <- top - i * h
     graphics::rect(x, y, x + w, y + h, col = colour(beta[i, j]), border = "white", lwd = .8)
     mark <- if (!is.finite(beta[i, j])) "NA" else
@@ -64,8 +64,8 @@ mc19_main_heatmap <- function(results, cfg) {
   graphics::text(.13, row_y, rationale, adj = 0, cex = .84)
   for (y in top - seq_len(18) * h)
     graphics::segments(.025, y, .55, y, col = "#B0B0B0", lwd = .4)
-  graphics::text(left + (seq_len(4) - .5) * w, bottom - .024,
-    expression(plain(NO)[3]*"-N", plain(NO)[2]*"-N", plain(NH)[4]*"-N", plain(DIP)), cex = .95)
+  graphics::text(left + (seq_along(cfg$environments) - .5) * w, bottom - .024,
+    unname(cfg$short_names[cfg$environments]), cex = .80)
   breaks <- seq(-limit, limit, length.out = 202)
   for (k in 1:201) graphics::rect(.90, .28 + (k - 1) / 201 * .43,
     .925, .28 + k / 201 * .43, col = palette[k], border = NA)
@@ -73,8 +73,8 @@ mc19_main_heatmap <- function(results, cfg) {
   graphics::text(.938, .28 + (ticks + limit) / (2 * limit) * .43,
     formatC(ticks, format = "f", digits = 2), adj = 0, cex = .8)
   graphics::text(.9125, .75, "Beta", cex = .92)
-  graphics::text(.9125, .727, "per nutrient SD", cex = .65)
-  graphics::text(.5, .025, "* BH q < 0.05 (95 tests)", cex = .8)
+  graphics::text(.9125, .727, "per TS env. SD", cex = .65)
+  graphics::text(.5, .025, sprintf("* BH q < 0.05 (%d tests)",cfg$q_family_size), cex = .8)
 }
 
 # One panel per significant MC x nutrient combination, ordered by the analysis plan.
@@ -206,7 +206,7 @@ mc19_main_curves <- function(results, entries, grids, cfg, environment_table, pa
     graphics::text(.5,.74/height,"Main panels: full range; right-hand panels: y-axis zoom (same x-axis).",cex=.82)
     graphics::text(.5,.46/height,"Dashed lines: NO2-N LOD = 0.002 mg N/L; DIP LOD = 0.002 mg P/L.",cex=.82)
   }
-  graphics::text(.5,.18/height,sprintf("%s; MC / total Ruegeria reads; beta per nutrient SD; BH q (%d tests). n = %d; %d TS.",
+  graphics::text(.5,.18/height,sprintf("%s; MC / total Ruegeria reads; beta per TS environment SD; BH q (%d tests). n = %d; %d TS.",
     cfg$analysis_scope,cfg$q_family_size,results$n_samples[1],results$n_TS[1]),cex=.82)
 }
 

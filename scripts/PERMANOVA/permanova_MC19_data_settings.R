@@ -1,12 +1,12 @@
 # MC19 / coral or ecosystem / 原始独立样本：数据读取和统计工具。
 # 本文件只定义设置与函数；由03调用，不读取旧01或Repeat_group流程。
-project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
+project_dir <- getOption("mc19.project_dir","C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series")
 sys.source(file.path(project_dir, "scripts", "mc19_run_io.R"), envir=environment())
 sys.source(file.path(project_dir, "scripts", "mc19_input.R"), envir=environment())
 input_file <- file.path(project_dir, "data", "MC19_TS8_env5.xlsx")
 analysis_scope <- getOption("mc19.analysis_scope", "coral")
 stopifnot(length(analysis_scope) == 1L, analysis_scope %in% c("coral", "ecosystem"))
-analysis_version <- paste0("MC19_env5_TS8_", analysis_scope, "_individual_TSlabels_v1_vegan")
+analysis_version <- mc19_method_version(analysis_scope,"PERMANOVA")
 scope_mask <- function(metadata, scope=analysis_scope) {
   niche <- tolower(trimws(as.character(metadata$Host_niche)))
   host <- tolower(trimws(as.character(metadata$Host_type)))
@@ -20,7 +20,7 @@ mc_cols <- c("MC41", "MC95", "MC6", "MC507", "MC21", "MC451", "MC98", "MC2s1",
              "MC0", "MC10", "MC15")
 env_cols <- mc19_env_fields
 env_labels <- c(Nitrate_mgN_L="硝酸盐氮", Nitrite_mgN_L="亚硝酸盐氮",
-                Ammonia_mgN_L="氨氮", DIN_mgN_L="DIN", DIP_mgP_L="DIP")
+                Ammonia_mgN_L="总氨氮", DIN_mgN_L="DIN", DIP_mgP_L="DIP", SST_C="水温")
 ts_levels <- mc19_ts_levels
 
 require_mc19_packages <- function() {
@@ -35,6 +35,9 @@ read_mc19_samples <- function(path=input_file) {
   community <- as.data.frame(readxl::read_excel(path, sheet="Community"))
   metadata <- as.data.frame(readxl::read_excel(path, sheet="Metadata"))
   environment <- mc19_prepare_environment(as.data.frame(readxl::read_excel(path, sheet="Environment_TS")))
+  chosen <- mc19_select_samples(metadata,community)
+  metadata <- chosen$metadata; community <- chosen$community
+  mc19_verify_temperature(environment,project_dir)
   metadata <- mc19_match_environment(metadata, environment)
   if (!identical(names(community), c("New_ID", mc_cols))) {
     stop("Community必须按约定顺序包含New_ID和19个MC；MC2S1使用原始拼写MC2s1。")
@@ -82,22 +85,23 @@ read_mc19_samples <- function(path=input_file) {
   rownames(y) <- as.character(selected$New_ID)
   batches <- environment[environment$TS %in% selected$TS, , drop=FALSE]
   batches <- batches[order(match(batches$TS, ts_levels)), , drop=FALSE]
-  if (nrow(batches) != 8L || !identical(as.character(batches$TS), ts_levels))
-    stop("当前分析要求所选范围完整包含TS1–TS8。")
+  if (nrow(batches) != length(ts_levels) || !identical(as.character(batches$TS), ts_levels))
+    stop("Selected scope must contain all TS of the requested workflow.")
   row_batch <- match(selected$TS, batches$TS)
   coverage <- data.frame(TS=ts_levels,
     N_scope_samples=as.integer(table(factor(metadata$TS[in_scope], levels=ts_levels))),
     N_environment_complete=as.integer(table(factor(selected$TS, levels=ts_levels))))
   coverage$N_excluded_missing_environment <- coverage$N_scope_samples - coverage$N_environment_complete
   list(scope=analysis_scope, metadata=selected, community=y, batches=batches, row_batch=row_batch,
-       coverage=coverage, input_md5=unname(tools::md5sum(path)))
+       coverage=coverage, input_md5=unname(tools::md5sum(path)),
+       temperature_source=if(mc19_profile()$temperature) mc19_verify_temperature(environment,project_dir) else NULL)
 }
 
 # Compatibility name retained for external callers; selection follows analysis_scope.
 read_coral_samples <- read_mc19_samples
 
 enumerate_ts_orders <- function(n) {
-  stopifnot(n == 8L)
+  stopifnot(n == length(ts_levels))
   recurse <- function(x) {
     if (length(x) == 1L) return(matrix(x, nrow=1L))
     do.call(rbind, lapply(seq_along(x), function(i) cbind(x[i], recurse(x[-i]))))

@@ -4,9 +4,9 @@
   analysis_scope <- getOption("mc19.analysis_scope", "coral")  # coral / ecosystem
   old_scope <- options(mc19.analysis_scope=analysis_scope)
   on.exit(options(old_scope), add=TRUE)
-  make_plots <- TRUE
+  make_plots <- isTRUE(getOption("mc19.run_plots",TRUE))
   make_interactive_3d <- FALSE
-  project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
+  project_dir <- getOption("mc19.project_dir","C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series")
   packages <- c("readxl","vegan",if(make_plots) "ggplot2",
                 if(make_plots && make_interactive_3d) c("plotly","htmlwidgets"))
   missing <- packages[!vapply(packages,requireNamespace,logical(1),quietly=TRUE)]

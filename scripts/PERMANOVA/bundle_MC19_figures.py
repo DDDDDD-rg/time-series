@@ -23,9 +23,18 @@ def source_pdf(figure_root: Path, stem: str) -> Path:
     return organized if organized.is_file() else figure_root / (stem + ".pdf")
 
 
-def bundle(figure_root: Path, allow_partial: bool = False) -> dict:
+def bundle(figure_root: Path, allow_partial: bool = False, environments=ENVIRONMENT) -> dict:
     figure_root = figure_root.resolve(strict=True)
-    sources = {name: [source_pdf(figure_root, stem) for stem in stems] for name, stems in GROUPS.items()}
+    environments = tuple(environments)
+    if not environments or len(set(environments)) != len(environments) or not set(environments) <= set(ENVIRONMENT) | {"SST_C"}:
+        raise ValueError("Invalid environmental panel list")
+    groups = {name: list(stems) for name, stems in GROUPS.items()}
+    for name, stems in groups.items():
+        if any(stem.startswith("NMDS_environment_") for stem in stems):
+            groups[name] = ["environment_R2_BH", "NMDS_TS", *["NMDS_environment_" + e for e in environments], "host_highlight_descriptive"]
+        elif any(stem.startswith("MC_composition_") for stem in stems):
+            groups[name] = ["MC_composition_" + e for e in environments]
+    sources = {name: [source_pdf(figure_root, stem) for stem in stems] for name, stems in groups.items()}
     missing = {name: [str(p) for p in paths if not p.is_file()] for name, paths in sources.items()}
     missing = {name: paths for name, paths in missing.items() if paths}
     if missing and not allow_partial:
@@ -68,5 +77,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--figure-dir", type=Path, required=True)
     parser.add_argument("--allow-partial", action="store_true", help="Refresh complete groups when only a plotting branch was requested")
+    parser.add_argument("--environments", nargs="+", default=ENVIRONMENT)
     args = parser.parse_args()
-    print(json.dumps(bundle(args.figure_dir, args.allow_partial), ensure_ascii=False, indent=2))
+    print(json.dumps(bundle(args.figure_dir, args.allow_partial, args.environments), ensure_ascii=False, indent=2))

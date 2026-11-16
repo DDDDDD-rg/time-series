@@ -5,8 +5,8 @@
 
 local({
   analysis_scope <- getOption("mc19.analysis_scope", "coral")  # coral / ecosystem
-  project_dir <- "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"
-  results_dir <- ""              # 空字符串读env5/TS8/TS-only Wald独立latest。
+  project_dir <- getOption("mc19.project_dir","C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series")
+  results_dir <- getOption("mc19.glmm.result_dir", "")              # 空字符串读env5/TS8/TS-only Wald独立latest。
 
   engine <- new.env(parent = globalenv())
   for (helper in c("glmm_MC19_pilot_helpers.R", "glmm_MC19_wald_helpers.R",

@@ -1,3 +1,4 @@
+sys.source(file.path(getOption("mc19.project_dir", "C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series"), "scripts", "mc19_profile.R"), envir=environment())
 # Shared naming and completed-run discovery. Definitions only; no fitting or plotting.
 # Method versions remain in the analysis manifests, independent of run numbers.
 mc19_io_scope <- function(scope) {
@@ -6,7 +7,7 @@ mc19_io_scope <- function(scope) {
 }
 mc19_io_prefix <- function(kind, scope) {
   stopifnot(kind %in% c("GLMM", "PERMANOVA", "two_part", "talk"))
-  paste0("MC19_", kind, "_", mc19_io_scope(scope))
+  paste0("MC19_", kind, mc19_profile()$output_tag, "_", mc19_io_scope(scope))
 }
 mc19_io_time <- function() format(Sys.time(), "%Y-%m-%dT%H:%M:%OS6Z", tz="UTC")
 mc19_io_record <- function(path) {
@@ -22,6 +23,7 @@ mc19_io_update <- function(path, ...) {
   invisible(path)
 }
 mc19_io_aliases <- function(project_dir, kind, scope, area="results") {
+  if(mc19_profile()$temperature) return(character())
   names <- switch(kind,
     GLMM=paste0("00_latest_GLMM_MC19_env5_TS8_", scope, ".txt"),
     PERMANOVA=paste0("00_latest_PERMANOVA_MC19_env5_TS8_", scope, ".txt"),
@@ -86,18 +88,18 @@ mc19_result_complete <- function(path, kind, scope) {
     if (kind == "GLMM") {
       m <- readRDS(file.path(s, "wald_manifest.rds"))
       saved_scope <- if (is.null(m$analysis_scope)) "coral" else m$analysis_scope
-      expected <- paste0("MC19_env5_TS8_", scope, "_Wald_v1")
+      expected <- mc19_method_version(scope,"GLMM")
       return(identical(saved_scope, scope) && identical(m$version, expected) &&
-        isTRUE(m$fit_complete) && identical(as.integer(m$n_TS), 8L) && length(m$model_files) == 95L &&
+        isTRUE(m$fit_complete) && identical(as.integer(m$n_TS), mc19_profile()$n_TS) && length(m$model_files) == mc19_profile()$n_models &&
         file.exists(file.path(path, "00_result.csv")) && file.exists(file.path(s, "all_results.csv")))
     }
     if (kind == "PERMANOVA") {
       status <- readLines(file.path(s, "00_run_status.txt"), n=1L, warn=FALSE)
       t <- utils::read.csv(file.path(s, "environment_results_full.csv"), fileEncoding="UTF-8-BOM")
-      return(identical(status, "complete") && nrow(t) == 5L &&
+      return(identical(status, "complete") && nrow(t) == mc19_profile()$n_env &&
         all(c("Scope", "Status", "N_TS", "Analysis_version") %in% names(t)) &&
-        !anyNA(t$N_TS) && !anyNA(t$Analysis_version) && all(t$N_TS == 8L) &&
-        all(t$Analysis_version == paste0("MC19_env5_TS8_", scope, "_individual_TSlabels_v1_vegan")) &&
+        !anyNA(t$N_TS) && !anyNA(t$Analysis_version) && all(t$N_TS == mc19_profile()$n_TS) &&
+        all(t$Analysis_version == mc19_method_version(scope,"PERMANOVA")) &&
         all(c("Scope", "Status") %in% names(t)) && !anyNA(t$Scope) && !anyNA(t$Status) &&
         all(t$Scope == scope) && all(t$Status == "ok") &&
         file.exists(file.path(path, "environment_results.csv")) &&
@@ -109,8 +111,8 @@ mc19_result_complete <- function(path, kind, scope) {
       t <- utils::read.csv(file.path(s, "all_results.csv"))
       parent <- readRDS(file.path(m$source, "supporting_files", "wald_manifest.rds"))
       return(identical(m$scope, scope) &&
-        identical(parent$version, paste0("MC19_env5_TS8_", scope, "_Wald_v1")) &&
-        identical(as.integer(parent$n_TS), 8L) && length(status) == 1L &&
+        identical(parent$version, mc19_method_version(scope,"GLMM")) &&
+        identical(as.integer(parent$n_TS), mc19_profile()$n_TS) && length(status) == 1L &&
         status %in% c("fits_complete_review_diagnostics", "fits_complete_some_require_review") &&
         nrow(t) == 2L * length(m$keys) && file.exists(file.path(path, "00_result.csv")) &&
         all(file.exists(file.path(s, c("predictions.rds", "observations.rds")))))
@@ -133,7 +135,7 @@ mc19_latest_result <- function(project_dir, kind, scope, explicit="") {
   discovered <- list.files(file.path(project_dir, "results"), pattern=pattern, full.names=TRUE)
   paths <- unique(c(pointed[nzchar(pointed)], discovered))
   paths <- paths[vapply(paths, mc19_result_complete, logical(1), kind=kind, scope=scope)]
-  if (!length(paths)) stop("No completed ", kind, " result for ", scope, ". Run the current 8-TS analysis after completing its input.")
+  if (!length(paths)) stop("No completed ", kind, " result for ", scope, ". Run the selected workflow after completing its input.")
   numbers <- as.numeric(sub(".*_run", "", basename(paths)))
   normalizePath(paths[which.max(numbers)], winslash="/", mustWork=TRUE)
 }
@@ -181,6 +183,7 @@ mc19_latest_talk <- function(project_dir, scope, source="", required=character()
     readme <- file.path(p,'README.txt')
     file.exists(readme) && (!nzchar(source) || paste('GLMM source:',normalizePath(source,winslash='/')) %in% readLines(readme,warn=FALSE))
   }, logical(1))
+  if(mc19_profile()$temperature) good <- good & startsWith(basename(paths),prefix)
   paths <- paths[good]
   if (!length(paths)) stop("No completed talk figures for ", scope)
   numbered <- grepl("_run[0-9]+$", basename(paths))

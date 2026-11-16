@@ -1,5 +1,7 @@
 # Time-series research project
 
+2026-11-16状态：七TS六指标单项分析已完成（两范围各114项，BH显著10/18）；另完成五指标联合GLMM、诊断38项、敏感性60项和先验预测114项。残差与先验校准仍需审查，收缩后验模型未拟合。最新记录见[联合分析审查](../../Research_Knowledge/questions/MC19_joint_TS7_results_review_v1.md)和[温度/六指标审查](../../Research_Knowledge/questions/MC19_TS7_temperature_results_review_v1.md)。以下旧批次导航按原时间理解。
+
 核对：2026-11-05，依据Time series-5及实际保存文件。
 
 结果表、图件与PPT分别保留在原来的 `results`、`figures`、`presentations` 中。过时结果和旧汇报已归入 `archive/old_outputs`。

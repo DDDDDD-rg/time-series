@@ -3,21 +3,22 @@
 
 mc19_wald_config <- function(project_dir, analysis_scope="coral") {
   cfg <- mc19_pilot_config(project_dir)
+  sys.source(file.path(project_dir,"scripts","mc19_temperature_incremental.R"),envir=environment(mc19_wald_config))
   stopifnot(length(analysis_scope) == 1L, analysis_scope %in% c("coral", "ecosystem"))
   cfg$analysis_scope <- analysis_scope
-  cfg$expected_samples <- NULL
-  cfg$version <- paste0("MC19_env5_TS8_", analysis_scope, "_Wald_v1")
+  cfg$expected_samples <- if(mc19_profile()$temperature) c(coral=98L,ecosystem=310L)[[analysis_scope]] else NULL
+  cfg$version <- mc19_method_version(analysis_scope,"GLMM")
   cfg$mc_ids <- cfg$all_mc_ids
   cfg$environments <- cfg$nutrient_fields
   cfg$model_ids <- "BB_TS"
   cfg$short_names <- c(Nitrate_mgN_L = "NO3", Nitrite_mgN_L = "NO2",
-    Ammonia_mgN_L = "NH4", DIN_mgN_L = "DIN", DIP_mgP_L = "DIP")
+    Ammonia_mgN_L = "NH4", DIN_mgN_L = "DIN", DIP_mgP_L = "DIP", SST_C="Temp")
   cfg$axis_labels <- c(Nitrate_mgN_L = "Nitrate (mg N/L)",
     Nitrite_mgN_L = "Nitrite (mg N/L)", Ammonia_mgN_L = "Ammonia (mg N/L)",
-    DIN_mgN_L = "DIN (mg N/L)", DIP_mgP_L = "DIP (mg P/L)")
-  cfg$n_models <- cfg$q_family_size <- 95L
+    DIN_mgN_L = "DIN (mg N/L)", DIP_mgP_L = "DIP (mg P/L)", SST_C="Temperature (deg C)")
+  cfg$n_models <- cfg$q_family_size <- 19L*length(cfg$environments)
   cfg$scripts <- c("GLMM.R", "GLMM_reads_diagnostics_full.R", "plot_GLMM_MC19.R",
-    "glmm_MC19_wald_helpers.R", "glmm_MC19_wald_plot_helpers.R", "glmm_MC19_pilot_helpers.R", "../mc19_run_io.R", "../mc19_input.R")
+    "glmm_MC19_wald_helpers.R", "glmm_MC19_wald_plot_helpers.R", "glmm_MC19_pilot_helpers.R", "../mc19_run_io.R", "../mc19_input.R", "../mc19_profile.R", "../TS7_temperature.R", "../mc19_temperature_incremental.R")
   cfg
 }
 
@@ -48,10 +49,10 @@ mc19_wald_load_input <- function(cfg) {
   for (environment in cfg$environments) {
     values <- environment_TS[[environment]]
     if (any(!is.finite(values)) || any(values < 0) || length(values) != nlevels(template$TS) ||
-        any(!is.finite(template[[environment]]))) stop("五项营养盐必须完整覆盖同一批原始样本：", environment)
+        any(!is.finite(template[[environment]]))) stop("All selected environments must cover the same samples: ", environment)
     center <- mean(values)
     scale <- stats::sd(values)
-    if (!is.finite(scale) || scale <= 0) stop("营养盐无可估计变化：", environment)
+    if (!is.finite(scale) || scale <= 0) stop("Environment has no estimable variation: ", environment)
     scaling[[environment]] <- data.frame(environment = environment, center = center, scale = scale,
       E_low = min(values), E_high = max(values),
       censored_TS = sum(environment_TS[[paste0(environment, "_censored")]]),
@@ -71,7 +72,7 @@ mc19_wald_load_input <- function(cfg) {
         median_proportion = stats::median(d$MC_proportion), max_proportion = max(d$MC_proportion))
     }
   }
-  if (length(blocks) != 95L || !identical(mc19_hash(verified$fingerprints$path)$md5,
+  if (length(blocks) != cfg$n_models || !identical(mc19_hash(verified$fingerprints$path)$md5,
       verified$fingerprints$md5)) stop("任务数或读取中的输入指纹变化。")
   list(blocks = blocks, scaling = do.call(rbind, scaling), environment_TS = environment_TS,
     audit = do.call(rbind, audit), coverage = verified$coverage, inclusion = verified$exclusion,
@@ -85,7 +86,7 @@ mc19_wald_fit_one <- function(mc, d, cfg) {
   attempt <- mc19_capture(function() glmmTMB::glmmTMB(formula = formula, data = d,
     family = glmmTMB::betabinomial(link = "logit"), ziformula = ~0, dispformula = ~1,
     REML = FALSE, na.action = stats::na.fail,
-    control = glmmTMB::glmmTMBControl(parallel = 1L,
+    control = glmmTMB::glmmTMBControl(parallel = getOption("glmmTMB.cores",1L),
       optCtrl = list(iter.max = 10000L, eval.max = 10000L))))
   fit <- if (nzchar(attempt$error)) NULL else attempt$value
   row$warnings <- paste(attempt$warnings, collapse = " | ")
@@ -164,8 +165,9 @@ mc19_wald_write_result <- function(results, run_dir) {
 }
 
 mc19_wald_run <- function(cfg) {
-  if (!identical(cfg$model_ids, "BB_TS") || cfg$n_models != 95L || cfg$q_family_size != 95L)
-    stop("当前流程仅允许19MC x 5营养盐的95个TS随机截距模型。")
+  if(mc19_profile()$incremental) return(mc19_incremental_glmm_run(cfg))
+  if (!identical(cfg$model_ids, "BB_TS") || cfg$n_models != 19L*length(cfg$environments) || cfg$q_family_size != cfg$n_models)
+    stop("Model count differs from the selected workflow.")
   mc19_require(c("readxl", "glmmTMB"))
   input <- mc19_wald_load_input(cfg)
   scripts <- file.path(cfg$project_dir, "scripts", "GLMM", cfg$scripts)
@@ -190,29 +192,24 @@ mc19_wald_run <- function(cfg) {
     new_fit_count = 0L,
     bootstrap = FALSE, permutations = FALSE, LOTO = FALSE)
   saveRDS(manifest, file.path(support, "wald_manifest.rds"))
-  mc19_write_text(c("19MC x 5营养盐，仅TS随机截距模型，共95项Wald beta检验，单一BH族n=95。",
-    sprintf("%s：%d个原始样本，%d个TS；不平均，无Host/Repeat/SST项。", cfg$analysis_scope, manifest$n_samples, manifest$n_TS),
-    "响应为MC reads和其它Ruegeria reads，分母加总原表全部MC，不对19MC重新归一化。",
-    "公式固定为cbind(MC_reads, Other_reads) ~ E_z + (1 | TS)；Beta-binomial/logit，dispformula=~1，ziformula=~0。",
-    "每次单一营养盐，按8TS等权中心/SD标准化。",
-    "beta_P_value直接取summary(fit)$coefficients$cond[E_z, Pr(>|z|)]。不运行bootstrap、标签置换或LOTO。",
-    "Wald P/CI是渐近近似；环境信息来自8TS。",
-    "beta_q_value对全部95项统一BH，无法可靠估计项留NA但保持n=95，不按显著性选择MC。",
-    "数值问题、分布诊断标记分开；少数极端值或LOTO翻转不自动淘汰完整模型。",
-    "保留原始报告值及L/2规则；DIN为三项无机氮处理后的和，其删失标记表示包含L/2成分。",
-    "本范围全部95模型以完整8TS数据重新拟合。",
-    "TS-only范围为查看172226两结构结果后由用户确定的后续方案；历史152项P/q及输出保持原样。",
-    "默认另做已保存模型的2000次模拟诊断，不重新拟合；诊断P不作为beta关联P。",
-    "00_result.csv为主要结果；完整字段、模型、输入、诊断、源码和状态在supporting_files。"),
-    file.path(run_dir, "00_readme.txt"))
-  mc19_write_text("fitting_95_TS_models", file.path(support, "run_status.txt"))
+  mc19_write_text(c(sprintf("19 MC x %d environments; %d single-indicator TS models; BH n=%d.",length(cfg$environments),cfg$n_models,cfg$q_family_size),
+    sprintf("Scope=%s; samples=%d; TS=%d; workflow=%s.",cfg$analysis_scope,manifest$n_samples,manifest$n_TS,mc19_profile()$id),
+    "cbind(MC_reads, Other_reads) ~ E_z + (1 | TS); Beta-binomial/logit; no Host/Repeat adjustment or sample averaging.",
+    "Each environment is fitted separately, including temperature when selected. This is not the joint GLMM.",
+    "Denominator: all original Ruegeria MC rows including Unassigned. Z scores weight each TS once.",
+    "Wald P values from glmmTMB; BH across the full planned family, including unavailable rows.",
+    "Censored nutrients use L/2; DIN sums the three components. Temperature: observed PM11 surface-water degrees C.",
+    "All selected models are newly fitted. No bootstrap, label permutation or LOTO in this GLMM workflow.",
+    "Diagnostic simulations check distributional fit and do not supply the coefficient P values."),file.path(run_dir,"00_readme.txt"))
+  if(mc19_profile()$temperature) file.copy(mc19_temperature_source(cfg$project_dir),file.path(support,"PM11_temperature_source.csv"))
+  mc19_write_text(paste0("fitting_",cfg$n_models,"_TS_models"),file.path(support,"run_status.txt"))
   rows <- list()
   for (environment in cfg$environments) for (mc in cfg$mc_ids) for (model in cfg$model_ids) {
     key <- mc19_wald_key(mc, environment, model)
     d <- input$blocks[[paste(mc, environment, sep = "__")]]
     scale_row <- input$scaling[input$scaling$environment == environment, , drop = FALSE]
     origin <- "new_fit"
-    cat("模型 ", length(rows) + 1L, "/95：", key, "\n", sep = ""); flush.console()
+    cat("模型 ", length(rows) + 1L, "/",cfg$n_models,"：", key, "\n", sep = ""); flush.console()
     entry <- mc19_wald_fit_one(mc, d, cfg)
     manifest$new_fit_count <- manifest$new_fit_count + 1L
     entry <- mc19_wald_annotate(entry, environment, scale_row, origin, cfg)
@@ -237,12 +234,12 @@ mc19_wald_run <- function(cfg) {
   saveRDS(manifest, file.path(support, "wald_manifest.rds"))
   mc19_write_text("Wald_fits_complete_diagnostics_pending", file.path(support, "run_status.txt"))
   mc19_publish_result(cfg$project_dir, "GLMM", cfg$analysis_scope, run_dir)
-  mc19_write_text(c("# Latest GLMM", "", "当前：MC19 x 5 nutrients，TS随机截距；Wald P/BH n=95。", "",
+  mc19_write_text(c("# Latest GLMM", "", sprintf("Current: 19 MC x %d environments; %d TS; BH n=%d.",length(cfg$environments),cfg$expected_TS,cfg$q_family_size), "",
     paste0("- [主结果](", basename(run_dir), "/00_result.csv)"),
     paste0("- [完整配套](", basename(run_dir), "/supporting_files/)"), "",
-    paste(cfg$analysis_scope, "原始独立样本；无Host/Repeat/SST，不平均，不bootstrap。"),
+    paste(cfg$analysis_scope, "original samples; single environment; no Host/Repeat adjustment or averaging."),
     "历史172226为152项两结构Wald，153110为bootstrap；原结果保留。本批使用TS-only独立目录和指针。"),
-    file.path(cfg$results_root, paste0("00_LATEST_GLMM_", cfg$analysis_scope, ".md")))
+    file.path(cfg$results_root, paste0("00_LATEST_GLMM",mc19_profile()$output_tag,"_", cfg$analysis_scope, ".md")))
   invisible(run_dir)
 }
 
@@ -258,7 +255,7 @@ mc19_wald_read_run <- function(cfg, run_dir = "") {
   if (!identical(saved_scope, cfg$analysis_scope)) stop("保存结果与所选分析范围不同。")
   expected_n <- if (!is.null(cfg$expected_samples)) cfg$expected_samples else manifest$n_samples
   expected_ts <- cfg$expected_TS
-  if (!identical(as.integer(manifest$n_TS), expected_ts)) stop("当前结果必须来自完整8TS。")
+  if (!identical(as.integer(manifest$n_TS), expected_ts)) stop("Result TS count differs from the selected workflow.")
   if (length(expected_n) != 1L || !is.finite(expected_n) || expected_n < 3L) stop("缺少样本数记录。")
   if (is.null(results$analysis_scope)) results$analysis_scope <- saved_scope
   if (anyNA(results$analysis_scope) || any(results$analysis_scope != saved_scope)) stop("结果范围字段不符。")
@@ -270,7 +267,7 @@ mc19_wald_read_run <- function(cfg, run_dir = "") {
       length(manifest$model_files) != cfg$n_models || nrow(results) != cfg$n_models || anyDuplicated(keys) ||
       !setequal(keys, expected) || !setequal(names(manifest$model_files), expected) ||
       any(results$n_samples != expected_n | results$n_TS != expected_ts | results$q_family_size != cfg$q_family_size))
-    stop("不是完整的当前95模型TS-only Wald批次。")
+    stop("Incomplete or incompatible single-environment Wald run.")
   primary_keys <- mc19_wald_key(primary$MC_ID, primary$environment, primary$model)
   if (nrow(primary) != cfg$n_models || anyDuplicated(primary_keys) || !setequal(primary_keys, keys))
     stop("主表与完整明细的模型键不一致。")
@@ -303,8 +300,16 @@ mc19_wald_diagnostics <- function(cfg, run_dir = "") {
       dispersion_p_diagnostic = NA_real_, zero_inflation_p_diagnostic = NA_real_,
       summary_flags = NA_integer_, n_sim = cfg$n_sim, seed = cfg$seed + i, warnings = "", error = "")
     if (isTRUE(r$numerical_ok) && !is.null(entry$fit)) {
-      cat("诊断 ", i, "/95：", key, "（只模拟，不重新拟合）\n", sep = ""); flush.console()
-      attempt <- mc19_capture(function() mc19_diagnostic_one(entry, cfg, cfg$seed + i))
+      cat("诊断 ", i, "/",cfg$n_models,"：", key, "（只模拟，不重新拟合）\n", sep = ""); flush.console()
+      cached_path <- file.path(destination,paste0(key,".rds"))
+      cached <- if(mc19_profile()$incremental && file.exists(cached_path)) tryCatch(readRDS(cached_path),error=function(e)NULL) else NULL
+      reusable <- !is.null(cached) && identical(cached$model_md5,unname(tools::md5sum(run$manifest$model_files[[key]]))) &&
+        identical(as.integer(cached$n_sim),as.integer(cfg$n_sim))
+      if(reusable) {
+        message("Reusing saved diagnostic: ",key)
+        attempt <- list(value=cached,warnings=character(),error="")
+        row$n_sim <- cached$n_sim;row$seed <- cached$seed
+      } else attempt <- mc19_capture(function() mc19_diagnostic_one(entry, cfg, cfg$seed + i))
       row$warnings <- paste(attempt$warnings, collapse = " | "); row$error <- attempt$error
       if (!nzchar(attempt$error)) {
         diagnosis <- attempt$value; row$status <- diagnosis$status
