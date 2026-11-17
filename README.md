@@ -1,3 +1,13 @@
+# Time-series research archive
+
+Independent repository split from [research](https://github.com/DDDDDD-rg/research), 2026-11-17. Earlier time-series commits are retained. This research direction is closed.
+
+- [Research handoff](HANDOFF.md)
+- [Archived source](archive/closed_v1/scripts/README.md)
+- [Shared research knowledge](https://github.com/DDDDDD-rg/research/tree/main/Research_Knowledge)
+
+Only source and Markdown are published in the current tree. All local data, figures, tables, PPT, models and caches remain on disk. Prior published artifacts remain traceable in Git history.
+
 # Time series — archived
 
 状态：2026-11-17按用户决定终止此研究方向。全部材料留在本文件夹内归档，不删除。
