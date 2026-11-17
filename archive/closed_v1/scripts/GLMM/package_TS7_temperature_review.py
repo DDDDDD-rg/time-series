@@ -30,7 +30,7 @@ def images_pdf(images, target):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[2] / "figures" / "temperature_review_v1")
+    parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[2] / "archive" / "superseded_figures" / "temperature_review_v1")
     args = parser.parse_args()
     root = args.output.resolve()
     support = root / "supporting_files"

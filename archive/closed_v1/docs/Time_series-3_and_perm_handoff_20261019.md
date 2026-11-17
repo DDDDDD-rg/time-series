@@ -231,7 +231,7 @@ DIP 的原始低于检出限记录保留，但未纳入当前 8 项环境主检�
 
 ## 9. 环境 Excel 与 PM11 历史数据
 
-交付文件：[results/TS1-TS7_环境指标_SPSS.xlsx](../results/TS1-TS7_环境指标_SPSS.xlsx)。继续修改前先重新读取，用户可能手动编辑。
+交付文件：[data/derived/TS7_environment_SPSS.xlsx](../data/derived/TS7_environment_SPSS.xlsx)。继续修改前先重新读取，用户可能手动编辑。
 
 ### 9.1 Environment_TS1_TS7
 

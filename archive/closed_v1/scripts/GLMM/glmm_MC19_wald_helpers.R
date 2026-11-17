@@ -1,3 +1,25 @@
+# Resolve archived manifest paths in memory; preserve saved RDS and fingerprints.
+mc19_relocate_saved_paths <- function(x) {
+  project <- getOption("mc19.project_dir", "")
+  if (!nzchar(project)) return(x)
+  relocate <- function(v) {
+    v <- gsub("\\\\", "/", v)
+    v <- gsub("results/joint_glmm_TS7_coral_run001", "archive/superseded_results/joint_env4_coral_v1", v, fixed=TRUE)
+    v <- gsub("results/joint_glmm_TS7_ecosystem_run001", "archive/superseded_results/joint_env4_ecosystem_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_GLMM_TS7_temp_coral_run001", "archive/superseded_results/glmm_temp_coral_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_GLMM_TS7_temperature_coral_run001", "archive/superseded_results/glmm_temp_early_coral_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_GLMM_TS7_temp_ecosystem_run001", "archive/superseded_results/glmm_temp_ecosystem_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_PERMANOVA_TS7_temp_coral_run001", "archive/superseded_results/permanova_temp_coral_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_PERMANOVA_TS7_temp_ecosystem_run001", "archive/superseded_results/permanova_temp_ecosystem_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_two_part_TS7_temp_coral_run001", "archive/superseded_results/two_part_temp_coral_v1", v, fixed=TRUE)
+    v <- gsub("results/MC19_two_part_TS7_temp_ecosystem_run001", "archive/superseded_results/two_part_temp_ecosystem_v1", v, fixed=TRUE)
+    v
+  }
+  if (is.character(x)) { n <- names(x); x <- relocate(x); if(!is.null(n)) names(x) <- relocate(n) }
+  else if (is.list(x)) { x[] <- lapply(x, mc19_relocate_saved_paths); if(!is.null(names(x))) names(x) <- relocate(names(x)) }
+  x
+}
+
 # Current analysis: definitions only. Source after glmm_MC19_pilot_helpers.R.
 # 19 MC x 5 nutrients, TS random intercept only; one BH family of 95.
 
@@ -248,7 +270,7 @@ mc19_wald_read_run <- function(cfg, run_dir = "") {
   run_dir <- mc19_latest_result(cfg$project_dir, "GLMM", cfg$analysis_scope, run_dir)
   run_dir <- normalizePath(run_dir, winslash = "/", mustWork = TRUE)
   support <- file.path(run_dir, "supporting_files")
-  manifest <- readRDS(file.path(support, "wald_manifest.rds"))
+  manifest <- mc19_relocate_saved_paths(readRDS(file.path(support, "wald_manifest.rds")))
   results <- utils::read.csv(file.path(support, "all_results.csv"), stringsAsFactors = FALSE)
   primary <- utils::read.csv(file.path(run_dir, "00_result.csv"), stringsAsFactors = FALSE)
   saved_scope <- if (is.null(manifest$analysis_scope)) "coral" else manifest$analysis_scope

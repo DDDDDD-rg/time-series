@@ -192,7 +192,7 @@ mc19_tp_analysis_hash <- function(path=NULL) {
 
 # Deep, read-only consistency check, including legacy runs without seal hashes.
 mc19_tp_validate <- function(out) {
-  s <- file.path(out,'supporting_files');m <- readRDS(file.path(s,'manifest.rds'))
+  s <- file.path(out,'supporting_files');m <- mc19_relocate_saved_paths(readRDS(file.path(s,'manifest.rds')))
   tab <- read.csv(file.path(s,'all_results.csv'));wide <- read.csv(file.path(out,'00_result.csv'))
   input <- read.csv(file.path(s,'analysis_input.csv'));pred <- readRDS(file.path(s,'predictions.rds'));obs <- readRDS(file.path(s,'observations.rds'))
   same <- function(a,b,tol=1e-10) length(a)==length(b) && all((is.na(a)&is.na(b)) | (is.finite(a)&is.finite(b)&abs(a-b)<=tol*pmax(1,abs(b))))

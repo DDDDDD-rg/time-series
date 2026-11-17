@@ -17,6 +17,7 @@
   e <- new.env(parent=globalenv())
   for(f in c("glmm_MC19_pilot_helpers.R","glmm_MC19_wald_helpers.R","glmm_MC19_wald_plot_helpers.R","mc19_talk_plot_helpers.R","mc19_two_part_helpers.R"))
     sys.source(file.path(project,"scripts","GLMM",f),e)
+  body(e$mc19_np_plot) <- parse(text=gsub("LOD","RL",paste(deparse(body(e$mc19_np_plot),width.cutoff=500L),collapse="\n"),fixed=TRUE))[[1]]
   revise <- function(fun,a,b) {
     code <- paste(deparse(body(fun),width.cutoff=500L),collapse="\n")
     if(!grepl(a,code,fixed=TRUE)) stop("Template mismatch: ",a)
@@ -38,7 +39,7 @@
   style$draw_curves <- revise(style$draw_curves,'cw <- (W - 0.2)/2','cw <- (W - 0.2)/max(2L,max(panels$column))')
   style$draw_curves <- revise(style$draw_curves,'Open points: nutrient below LOD (L/2). Dashed lines: NO2-N LOD = 0.002 mg N/L; DIP LOD = 0.002 mg P/L.',
     'Open: nutrient/component below RL (L/2); dashed: NO2/DIP RL = 0.002. ')
-  labels <- c(Nitrate_mgN_L="NO3-N (mg N/L)",Nitrite_mgN_L="NO2-N (mg N/L)",Ammonia_mgN_L="Ammonia-N (mg N/L)",DIN_mgN_L="DIN (mg N/L)",DIP_mgP_L="DIP (mg P/L)",SST_C="Temperature (deg C)")
+  labels <- c(Nitrate_mgN_L="NO3-N (mg N/L)",Nitrite_mgN_L="NO2-N (mg N/L)",Ammonia_mgN_L="TAN (mg N/L)",DIN_mgN_L="DIN (mg N/L)",DIP_mgP_L="DIP (mg P/L)",SST_C="Temperature (deg C)")
   savebase <- function(stem,draw,w=12.7,h=6) {
     grDevices::pdf(paste0(stem,".pdf"),width=w,height=h,pointsize=20,useDingbats=FALSE)
     tryCatch(draw(),finally=grDevices::dev.off())
@@ -60,6 +61,7 @@
     run <- e$mc19_wald_read_run(cfg,file.path(project,"results",paste0("MC19_GLMM_TS7_env6_",scope,"_run001")))
     r <- run$results;env <- read.csv(file.path(run$support,"input_environment_TS.csv"))
     cfg$short_names["SST_C"] <- "Temp"
+    cfg$short_names["Ammonia_mgN_L"] <- "TAN"
     style$W <- 12.7
     savebase(file.path(folder,"02_GLMM_heatmap_forest"),function()style$draw_heat(r,cfg))
     entries <- lapply(run$manifest$model_files,readRDS);selected <- e$mc19_significant_curve_rows(r,cfg)

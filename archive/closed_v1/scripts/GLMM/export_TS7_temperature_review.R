@@ -2,7 +2,7 @@
 # The old nutrient pages are copied unchanged; temperature gets explicit review annotations.
 (function() {
   project <- getOption("mc19.project_dir","C:/Users/xzy/Desktop/CUHK_Study/GNBF6010_Research_Projects/Research/Msc main project-time series")
-  output <- getOption("mc19.review.output",file.path(project,"figures","temperature_review_v1"))
+  output <- getOption("mc19.review.output",file.path(project,"archive/superseded_figures","temperature_review_v1"))
   if(dir.exists(output) && !isTRUE(getOption("mc19.review.redraw",FALSE)))
     stop("Review output already exists; choose a new directory or explicitly set mc19.review.redraw=TRUE.")
   if(dir.exists(output) && !file.exists(file.path(output,"supporting_files","export_status.txt")))
@@ -21,7 +21,7 @@
     "mc19_talk_plot_helpers.R","mc19_two_part_helpers.R")) sys.source(file.path(project,"scripts","GLMM",f),e)
   # Track every existing result file and PPT before drawing. Export never publishes pointers.
   sources <- unlist(lapply(c("coral","ecosystem"),function(scope) unlist(lapply(c("GLMM","PERMANOVA","two_part"),function(kind)
-    list.files(file.path(project,"results",paste0("MC19_",kind,"_TS7_temp_",scope,"_run001")),recursive=TRUE,full.names=TRUE)))))
+    list.files(file.path(project,"archive/superseded_results",paste0(tolower(kind),"_temp_",scope,"_v1")),recursive=TRUE,full.names=TRUE)))))
   sources <- c(sources,list.files(file.path(project,"presentations"),pattern="[.]pptx$",recursive=TRUE,full.names=TRUE))
   before <- tools::md5sum(sources)
   manifest <- list();originals <- list()
@@ -89,7 +89,7 @@
     message("Exporting ",scope)
     folder <- file.path(output,scope);dir.create(folder,showWarnings=FALSE)
     cfg <- e$mc19_wald_config(project,scope)
-    run <- e$mc19_wald_read_run(cfg,file.path(project,"results",paste0("MC19_GLMM_TS7_temp_",scope,"_run001")))
+    run <- e$mc19_wald_read_run(cfg,file.path(project,"archive/superseded_results",paste0("glmm_temp_",scope,"_v1")))
     r <- run$results
     diag <- read.csv(file.path(run$support,"diagnostics","diagnostic_overview.csv"))
     temp <- diag[diag$environment=="SST_C",]
@@ -142,7 +142,7 @@
     copy_old(file.path(reference,if(scope=="coral")"image8.png" else "image9.png"),
       file.path(folder,"06_two_part_nutrients_PPT_original.png"))
     copy_old(file.path(old_tp,"two_part_curves.pdf"),file.path(folder,"07_two_part_nutrients_curves_original.pdf"))
-    tp_path <- file.path(project,"results",paste0("MC19_two_part_TS7_temp_",scope,"_run001"))
+    tp_path <- file.path(project,"archive/superseded_results",paste0("two_part_temp_",scope,"_v1"))
     tp <- e$mc19_tp_validate(tp_path)
     tab <- tp$tab[tp$tab$environment=="SST_C",]
     pred <- tp$pred[tp$pred$key %in% tab$key,];obs <- tp$obs[tp$obs$key %in% tab$key,]
